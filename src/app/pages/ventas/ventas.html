@@ -1,0 +1,121 @@
+<div class="row">
+  <!-- Columna Izquierda: Historial de Ventas y Auditoría -->
+  <div class="col-lg-7">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h4 class="card-title text-primary fw-bold">📜 Historial de Ventas y Auditoría</h4>
+        <h6 class="card-subtitle text-muted mb-3">Facturas emitidas y registro de estados en el sistema</h6>
+
+        <div class="table-responsive" style="max-height: 550px; overflow-y: auto;">
+          <table class="table table-hover align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Factura</th>
+                <th>Fecha</th>
+                <th>Total</th>
+                <th>Estado</th>
+                <th class="text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let venta of listaVentas" [ngClass]="{'table-danger text-muted': venta.Estado === 'ANULADA'}">
+                <td class="fw-bold">
+                  <span [ngStyle]="{'text-decoration': venta.Estado === 'ANULADA' ? 'line-through' : 'none'}">
+                    {{ venta.NumeroFactura }}
+                  </span>
+                </td>
+                <td>{{ venta.FechaVenta | date:'short' }}</td>
+                <td class="fw-bold" [ngClass]="{'text-success': venta.Estado !== 'ANULADA'}">
+                  ${{ venta.Total | number:'1.2-2' }}
+                </td>
+                <td>
+                  <span class="badge"
+                    [ngClass]="{'bg-success': venta.Estado !== 'ANULADA', 'bg-danger': venta.Estado === 'ANULADA'}">
+                    {{ venta.Estado || 'ACTIVO' }}
+                  </span>
+                </td>
+                <td class="text-center">
+                  <button class="btn btn-sm btn-outline-primary" (click)="verDetalleVenta(venta.Id)">
+                    🔍 Ver Detalle
+                  </button>
+                </td>
+              </tr>
+              <tr *ngIf="listaVentas.length === 0">
+                <td colspan="5" class="text-center text-muted py-4">No hay ventas registradas en el sistema.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Columna Derecha: Detalle de la Factura y Ticket PDF -->
+  <div class="col-lg-5">
+    <div class="card shadow-sm" *ngIf="ventaSeleccionada; else sinSeleccion">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="card-title text-dark mb-0 fw-bold">🧾 Detalle de Factura</h4>
+          <button class="btn btn-sm btn-outline-secondary" (click)="ventaSeleccionada = null">Cerrar</button>
+        </div>
+
+        <div class="mb-3 p-3 bg-light rounded border">
+          <p class="mb-1"><strong>N° Factura:</strong> {{ ventaSeleccionada.NumeroFactura }}</p>
+          <p class="mb-1"><strong>Fecha:</strong> {{ ventaSeleccionada.FechaVenta | date:'medium' }}</p>
+          <p class="mb-1"><strong>Estado Actual:</strong>
+            <span class="badge"
+              [ngClass]="{'bg-success': ventaSeleccionada.Estado !== 'ANULADA', 'bg-danger': ventaSeleccionada.Estado === 'ANULADA'}">
+              {{ ventaSeleccionada.Estado || 'ACTIVO' }}
+            </span>
+          </p>
+          <p class="mb-0"><strong>Total Histórico:</strong> <span class="fw-bold text-success">${{
+              ventaSeleccionada.Total | number:'1.2-2' }}</span></p>
+        </div>
+
+        <h6 class="fw-bold mb-2">Productos en esta factura:</h6>
+        <div class="table-responsive mb-3" style="max-height: 200px; overflow-y: auto;">
+          <table class="table table-sm table-bordered align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Producto</th>
+                <th class="text-center">Cant.</th>
+                <th class="text-end">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of ventaSeleccionada.items">
+                <td>{{ item.ProductoNombre }}</td>
+                <td class="text-center">{{ item.Cantidad }}</td>
+                <td class="text-end">${{ item.Subtotal | number:'1.2-2' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Botón para ver/descargar el Ticket en PDF (Compatible con Web y Móvil) -->
+        <button class="btn btn-dark fw-bold" (click)="verTicketPdf(ventaSeleccionada.Id)">
+          📥 Ver / Descargar Ticket PDF
+        </button>
+
+        <!-- Botón de anulación condicional: se deshabilita si ya está anulada -->
+        <div class="d-grid gap-2" *ngIf="ventaSeleccionada.Estado !== 'ANULADA'">
+          <button class="btn btn-outline-danger btn-sm fw-bold" (click)="anularVenta(ventaSeleccionada.Id)">
+            ❌ Anular Factura y Devolver Stock
+          </button>
+        </div>
+        <div class="alert alert-warning text-center mt-3 mb-0 py-2" *ngIf="ventaSeleccionada.Estado === 'ANULADA'">
+          <small>⚠️ Esta factura se encuentra anulada para efectos de auditoría.</small>
+        </div>
+      </div>
+    </div>
+
+    <ng-template #sinSeleccion>
+      <div class="card shadow-sm text-center text-muted py-5">
+        <div class="card-body">
+          <p class="mb-0">Selecciona una factura de la lista para ver sus detalles, estado fiscal y descargar el ticket
+            en PDF.</p>
+        </div>
+      </div>
+    </ng-template>
+  </div>
+</div>

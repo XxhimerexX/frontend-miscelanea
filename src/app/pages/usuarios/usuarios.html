@@ -1,0 +1,86 @@
+<div class="row">
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-body">
+        <h4 class="card-title">{{ modoEdicion ? '✏️ Editar Usuario' : '➕ Crear Nuevo Usuario' }}</h4>
+
+        <form (ngSubmit)="guardarUsuario()">
+          <div class="mb-3">
+            <label class="form-label">Nombre</label>
+            <input type="text" class="form-control" [(ngModel)]="usuarioForm.nombre" name="nombre" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Correo</label>
+            <input type="email" class="form-control" [(ngModel)]="usuarioForm.correo" name="correo" [disabled]="modoEdicion" required>
+          </div>
+
+          <div class="mb-3" *ngIf="!modoEdicion">
+            <label class="form-label">Contraseña temporal</label>
+            <input type="password" class="form-control" [(ngModel)]="usuarioForm.contrasena" name="contrasena" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Rol</label>
+            <select class="form-select" [(ngModel)]="usuarioForm.rolId" name="rolId" required>
+              <option [ngValue]="null" disabled>Selecciona un rol...</option>
+              <option *ngFor="let rol of listaRoles" [value]="rol.Id">{{ rol.Nombre }}</option>
+            </select>
+          </div>
+
+          <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary fw-bold">
+              {{ modoEdicion ? 'Guardar Cambios' : 'Crear Usuario' }}
+            </button>
+            <button type="button" class="btn btn-secondary" *ngIf="modoEdicion" (click)="resetFormulario()">
+              Cancelar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-body">
+        <h4 class="card-title">👥 Usuarios del Sistema</h4>
+
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Nombre</th>
+                <th>Correo</th>
+                <th>Rol</th>
+                <th>Estado</th>
+                <th class="text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let u of listaUsuarios">
+                <td>{{ u.Nombre }}</td>
+                <td>{{ u.Correo }}</td>
+                <td><span class="badge bg-secondary">{{ u.RolNombre }}</span></td>
+                <td>
+                  <span class="badge" [ngClass]="u.Activo ? 'bg-success' : 'bg-danger'">
+                    {{ u.Activo ? 'Activo' : 'Inactivo' }}
+                  </span>
+                </td>
+                <td class="text-center">
+                  <button class="btn btn-sm btn-warning text-white me-2" (click)="seleccionarParaEditar(u)">Editar</button>
+                  <button class="btn btn-sm" [ngClass]="u.Activo ? 'btn-outline-danger' : 'btn-outline-success'" (click)="alternarActivo(u)">
+                    {{ u.Activo ? 'Desactivar' : 'Activar' }}
+                  </button>
+                </td>
+              </tr>
+              <tr *ngIf="listaUsuarios.length === 0">
+                <td colspan="5" class="text-center text-muted py-3">No hay usuarios registrados.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

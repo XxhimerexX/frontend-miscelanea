@@ -1,0 +1,313 @@
+<!-- ============================= VISTA: LISTADO ============================= -->
+<div *ngIf="vista === 'lista'">
+  <div class="card">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+          <h4 class="card-title mb-0">🧾 Órdenes de Compra</h4>
+          <h6 class="card-subtitle text-muted">Gestión de pedidos a proveedores</h6>
+        </div>
+        <button class="btn btn-primary fw-bold" (click)="mostrarFormularioCrear()" *ngIf="authService.tienePermiso('compras.crear')">
+          + Nueva Orden
+        </button>
+      </div>
+
+      <div class="btn-group mb-3" role="group">
+        <button type="button" class="btn btn-sm" [ngClass]="filtroEstado === '' ? 'btn-dark' : 'btn-outline-dark'" (click)="cambiarFiltro('')">Todas</button>
+        <button type="button" class="btn btn-sm" [ngClass]="filtroEstado === 'PENDIENTE' ? 'btn-warning' : 'btn-outline-warning'" (click)="cambiarFiltro('PENDIENTE')">Pendientes</button>
+        <button type="button" class="btn btn-sm" [ngClass]="filtroEstado === 'RECIBIDA_PARCIAL' ? 'btn-info' : 'btn-outline-info'" (click)="cambiarFiltro('RECIBIDA_PARCIAL')">Parciales</button>
+        <button type="button" class="btn btn-sm" [ngClass]="filtroEstado === 'RECIBIDA_TOTAL' ? 'btn-success' : 'btn-outline-success'" (click)="cambiarFiltro('RECIBIDA_TOTAL')">Recibidas</button>
+        <button type="button" class="btn btn-sm" [ngClass]="filtroEstado === 'CANCELADA' ? 'btn-danger' : 'btn-outline-danger'" (click)="cambiarFiltro('CANCELADA')">Canceladas</button>
+      </div>
+
+      <div class="table-responsive" style="max-height: 550px; overflow-y: auto;">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Fecha</th>
+              <th>Proveedor</th>
+              <th>Usuario</th>
+              <th>Total</th>
+              <th>Estado</th>
+              <th class="text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let orden of listaOrdenes">
+              <td>{{ orden.FechaCreacion | date:'short' }}</td>
+              <td class="fw-bold">{{ orden.Proveedor }}</td>
+              <td>{{ orden.Usuario }}</td>
+              <td class="fw-bold text-success">${{ orden.Total | number:'1.2-2' }}</td>
+              <td>
+                <span class="badge"
+                  [ngClass]="{
+                    'bg-warning text-dark': orden.Estado === 'PENDIENTE',
+                    'bg-info text-dark': orden.Estado === 'RECIBIDA_PARCIAL',
+                    'bg-success': orden.Estado === 'RECIBIDA_TOTAL',
+                    'bg-danger': orden.Estado === 'CANCELADA'
+                  }">
+                  {{ orden.Estado }}
+                </span>
+              </td>
+              <td class="text-center">
+                <button class="btn btn-sm btn-outline-primary" (click)="verDetalleOrden(orden.Id)">🔍 Ver Detalle</button>
+              </td>
+            </tr>
+            <tr *ngIf="listaOrdenes.length === 0">
+              <td colspan="6" class="text-center text-muted py-4">No hay órdenes de compra registradas.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================= VISTA: CREAR ORDEN ============================= -->
+<div *ngIf="vista === 'crear'" class="row">
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-body">
+        <h4 class="card-title">🔍 Catálogo de Productos</h4>
+        <h6 class="card-subtitle text-muted mb-3">Selecciona un producto y define cantidad y costo</h6>
+
+        <div class="row g-2 align-items-end mb-3">
+          <div class="col-md-6">
+            <label class="form-label small fw-bold">Producto</label>
+            <select class="form-select" [(ngModel)]="itemActual.productoId" name="productoId">
+              <option [ngValue]="null" disabled>Selecciona un producto...</option>
+              <option *ngFor="let prod of listaProductos" [ngValue]="prod.Id">{{ prod.Nombre }} ({{ prod.CodigoBarras }})</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label small fw-bold">Cantidad</label>
+            <input type="number" class="form-control" [(ngModel)]="itemActual.cantidadPedida" name="cantidadPedida" min="1">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label small fw-bold">Costo Unitario</label>
+            <input type="number" step="0.01" class="form-control" [(ngModel)]="itemActual.costoUnitario" name="costoUnitario" min="0">
+          </div>
+          <div class="col-md-2">
+            <button class="btn btn-success w-100" (click)="agregarItemOrden()">
+              <i class="mdi mdi-cart-plus"></i> Agregar
+            </button>
+          </div>
+        </div>
+
+        <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
+          <table class="table table-sm table-hover">
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th class="text-center">Cant.</th>
+                <th class="text-end">Costo Unit.</th>
+                <th class="text-end">Subtotal</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of nuevaOrden.items; let i = index">
+                <td>{{ item.productoNombre }}</td>
+                <td class="text-center">{{ item.cantidadPedida }}</td>
+                <td class="text-end">${{ item.costoUnitario | number:'1.2-2' }}</td>
+                <td class="text-end fw-bold">${{ item.cantidadPedida * item.costoUnitario | number:'1.2-2' }}</td>
+                <td class="text-center">
+                  <button class="btn btn-sm btn-danger p-1" (click)="eliminarItemOrden(i)"><i class="mdi mdi-delete"></i></button>
+                </td>
+              </tr>
+              <tr *ngIf="nuevaOrden.items.length === 0">
+                <td colspan="5" class="text-center text-muted py-3">Aún no has agregado productos a la orden.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card">
+      <div class="card-body">
+        <h4 class="card-title">📋 Datos de la Orden</h4>
+
+        <div class="mb-3">
+          <label class="form-label fw-bold">Proveedor *</label>
+          <select class="form-select" [(ngModel)]="nuevaOrden.proveedorId" name="proveedorId">
+            <option [ngValue]="null" disabled>Selecciona un proveedor...</option>
+            <option *ngFor="let prov of listaProveedores" [ngValue]="prov.Id">{{ prov.RazonSocial }}</option>
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-bold">Fecha Esperada</label>
+          <input type="date" class="form-control" [(ngModel)]="nuevaOrden.fechaEsperada" name="fechaEsperada">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-bold">Observaciones</label>
+          <textarea class="form-control" rows="3" [(ngModel)]="nuevaOrden.observaciones" name="observaciones"></textarea>
+        </div>
+
+        <div class="d-flex justify-content-between mb-3">
+          <h5 class="fw-bold mb-0">Total de la Orden:</h5>
+          <h4 class="fw-bold text-success mb-0">${{ totalNuevaOrden() | number:'1.2-2' }}</h4>
+        </div>
+
+        <div class="d-grid gap-2">
+          <button class="btn btn-primary fw-bold" (click)="guardarOrden()" [disabled]="nuevaOrden.items.length === 0">
+            Registrar Orden de Compra
+          </button>
+          <button class="btn btn-secondary" (click)="vista = 'lista'">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================= VISTA: DETALLE / RECEPCIÓN ============================= -->
+<div *ngIf="vista === 'detalle' && ordenSeleccionada" class="row">
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="card-title mb-0">📦 Orden de Compra #{{ ordenSeleccionada.Id }}</h4>
+          <button class="btn btn-sm btn-outline-secondary" (click)="volverALista()">← Volver al listado</button>
+        </div>
+
+        <div class="mb-3 p-3 bg-light rounded border">
+          <p class="mb-1"><strong>Proveedor:</strong> {{ ordenSeleccionada.Proveedor }}</p>
+          <p class="mb-1"><strong>Creada por:</strong> {{ ordenSeleccionada.Usuario }} el {{ ordenSeleccionada.FechaCreacion | date:'medium' }}</p>
+          <p class="mb-1"><strong>Estado:</strong>
+            <span class="badge"
+              [ngClass]="{
+                'bg-warning text-dark': ordenSeleccionada.Estado === 'PENDIENTE',
+                'bg-info text-dark': ordenSeleccionada.Estado === 'RECIBIDA_PARCIAL',
+                'bg-success': ordenSeleccionada.Estado === 'RECIBIDA_TOTAL',
+                'bg-danger': ordenSeleccionada.Estado === 'CANCELADA'
+              }">
+              {{ ordenSeleccionada.Estado }}
+            </span>
+          </p>
+          <p class="mb-0" *ngIf="ordenSeleccionada.Observaciones"><strong>Observaciones:</strong> {{ ordenSeleccionada.Observaciones }}</p>
+        </div>
+
+        <h6 class="fw-bold mb-2">Productos pedidos:</h6>
+        <div class="table-responsive mb-3" style="max-height: 250px; overflow-y: auto;">
+          <table class="table table-sm table-bordered align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Producto</th>
+                <th class="text-center">Pedido</th>
+                <th class="text-center">Recibido</th>
+                <th class="text-end">Costo</th>
+                <th class="text-end">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of ordenSeleccionada.items">
+                <td>{{ item.ProductoNombre }}</td>
+                <td class="text-center">{{ item.CantidadPedida }}</td>
+                <td class="text-center" [ngClass]="{'text-success fw-bold': item.CantidadRecibida === item.CantidadPedida}">{{ item.CantidadRecibida }}</td>
+                <td class="text-end">${{ item.CostoUnitario | number:'1.2-2' }}</td>
+                <td class="text-end">${{ item.Subtotal | number:'1.2-2' }}</td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr class="table-light">
+                <td colspan="4" class="text-end fw-bold">Total:</td>
+                <td class="text-end fw-bold">${{ ordenSeleccionada.Total | number:'1.2-2' }}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <h6 class="fw-bold mb-2" *ngIf="ordenSeleccionada.recepciones.length > 0">Historial de recepciones:</h6>
+        <div class="table-responsive mb-3" style="max-height: 200px; overflow-y: auto;" *ngIf="ordenSeleccionada.recepciones.length > 0">
+          <table class="table table-sm table-striped">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Producto</th>
+                <th class="text-center">Cant.</th>
+                <th class="text-end">Costo</th>
+                <th>Recibido por</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let rec of ordenSeleccionada.recepciones">
+                <td>{{ rec.FechaRecepcion | date:'short' }}</td>
+                <td>{{ rec.ProductoNombre }}</td>
+                <td class="text-center">{{ rec.CantidadRecibida }}</td>
+                <td class="text-end">${{ rec.CostoUnitario | number:'1.2-2' }}</td>
+                <td>{{ rec.Usuario }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <button class="btn btn-outline-danger btn-sm fw-bold" (click)="cancelarOrdenActual()"
+          *ngIf="esOrdenReceptable() && authService.tienePermiso('compras.cancelar')">
+          ❌ Cancelar Orden de Compra
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel de recepción de mercancía -->
+  <div class="col-lg-5">
+    <div class="card" *ngIf="esOrdenReceptable() && authService.tienePermiso('compras.recibir'); else sinRecepcion">
+      <div class="card-body">
+        <h4 class="card-title">📥 Registrar Recepción</h4>
+        <h6 class="card-subtitle text-muted mb-3">Indica cuánto llegó de cada producto (puede ser parcial)</h6>
+
+        <div class="table-responsive mb-3" style="max-height: 350px; overflow-y: auto;">
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th class="text-center">Pendiente</th>
+                <th style="width: 110px;">Recibir</th>
+                <th style="width: 110px;">Costo</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let linea of lineasRecepcion" [ngClass]="{'text-muted': linea.pendiente === 0}">
+                <td><small>{{ linea.productoNombre }}</small></td>
+                <td class="text-center">{{ linea.pendiente }}</td>
+                <td>
+                  <input type="number" class="form-control form-control-sm" [(ngModel)]="linea.cantidadARecibir"
+                    [name]="'recibir-' + linea.detalleOrdenCompraId" min="0" [max]="linea.pendiente" [disabled]="linea.pendiente === 0">
+                </td>
+                <td>
+                  <input type="number" step="0.01" class="form-control form-control-sm" [(ngModel)]="linea.costoUnitario"
+                    [name]="'costo-' + linea.detalleOrdenCompraId" min="0" [disabled]="linea.pendiente === 0">
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label small fw-bold">Observaciones de la entrega</label>
+          <textarea class="form-control form-control-sm" rows="2" [(ngModel)]="observacionesRecepcion" name="observacionesRecepcion"></textarea>
+        </div>
+
+        <button class="btn btn-success w-100 py-2 fw-bold" (click)="registrarRecepcion()">
+          Confirmar Recepción
+        </button>
+      </div>
+    </div>
+
+    <ng-template #sinRecepcion>
+      <div class="card text-center text-muted py-5">
+        <div class="card-body">
+          <p class="mb-0">
+            {{ ordenSeleccionada.Estado === 'RECIBIDA_TOTAL' ? 'Esta orden ya fue recibida en su totalidad.' :
+               ordenSeleccionada.Estado === 'CANCELADA' ? 'Esta orden está cancelada.' :
+               'No tienes permiso para registrar recepciones de mercancía.' }}
+          </p>
+        </div>
+      </div>
+    </ng-template>
+  </div>
+</div>

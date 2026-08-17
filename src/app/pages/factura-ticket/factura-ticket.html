@@ -1,0 +1,64 @@
+<div class="ticket-container" *ngIf="datosFactura">
+  <!-- Encabezado del Ticket -->
+  <div class="text-center mb-3">
+    <h5 class="fw-bold mb-0">MISCELÁNEA</h5>
+    <p class="small text-muted mb-1">NIT: 123.456.789-0</p>
+    <p class="small text-muted mb-1">Cali, Colombia</p>
+    <p class="small mb-0"><strong>Factura N°:</strong> {{ datosFactura.NumeroFactura }}</p>
+    <p class="small"><strong>Fecha:</strong> {{ datosFactura.FechaVenta | date:'medium' }}</p>
+  </div>
+
+  <hr class="dashed-hr">
+
+  <!-- Listado de Productos -->
+  <table class="table table-sm table-borderless small mb-2">
+    <thead>
+      <tr class="border-bottom">
+        <th>Cant / Desc</th>
+        <th class="text-end">Subtotal</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let item of datosFactura.items">
+        <td>
+          {{ item.ProductoNombre || item.Nombre }}<br>
+          <small class="text-muted">{{ item.Cantidad }} x ${{ item.PrecioUnitario | number:'1.2-2' }}</small>
+        </td>
+        <td class="text-end align-middle">${{ item.Subtotal | number:'1.2-2' }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <hr class="dashed-hr">
+
+  <!-- Totales -->
+  <div class="small mb-3">
+    <div class="d-flex justify-content-between">
+      <span>Subtotal:</span>
+      <span>${{ datosFactura.Subtotal || datosFactura.Total | number:'1.2-2' }}</span>
+    </div>
+    <div class="d-flex justify-content-between">
+      <span>Impuestos:</span>
+      <span>${{ datosFactura.Impuestos || 0 | number:'1.2-2' }}</span>
+    </div>
+    <div class="d-flex justify-content-between fw-bold fs-6 mt-1">
+      <span>TOTAL A PAGAR:</span>
+      <span>${{ datosFactura.Total | number:'1.2-2' }}</span>
+    </div>
+  </div>
+
+  <hr class="dashed-hr">
+
+  <!-- Pie de página del Ticket -->
+  <div class="text-center small text-muted">
+    <p class="mb-1">¡Gracias por su compra!</p>
+    <p class="mb-0">Conserve este tiquete para cambios o garantía.</p>
+  </div>
+
+  <!-- Botón de acción (Oculto al imprimir) -->
+  <div class="d-grid gap-2 mt-4 no-print">
+    <button class="btn btn-dark btn-sm fw-bold" (click)="imprimirFactura()">
+      🖨️ Imprimir Recibo
+    </button>
+  </div>
+</div>

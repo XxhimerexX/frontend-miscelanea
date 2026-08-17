@@ -1,0 +1,75 @@
+<aside class="left-sidebar">
+    <div class="scroll-sidebar">
+        <nav class="sidebar-nav">
+            <ul id="sidebarnav">
+                <li class="user-profile">
+                    <a class="has-arrow waves-effect waves-dark" href="#" aria-expanded="false">
+                        <img src="../assets/images/users/profile.png" alt="user" />
+                        <span class="hide-menu">{{ authService.obtenerUsuario()?.nombre || 'Usuario' }}</span>
+                    </a>
+                    <ul aria-expanded="false" class="collapse">
+                        <li><a href="javascript:void()">My Profile </a></li>
+                        <li>
+                            <a href="javascript:void()" class="d-flex justify-content-between align-items-center">
+                                <span>Estado de Caja</span>
+                                <span [ngClass]="cajaAbierta ? 'badge bg-success' : 'badge bg-secondary'">
+                                    {{ cajaAbierta ? 'Abierta' : 'Cerrada' }}
+                                </span>
+                            </a>
+                        </li>
+                        <li *ngIf="cajaAbierta">
+                            <a href="javascript:void()" (click)="abrirPanelCierre()" class="text-danger fw-bold">
+                                🔒 Cerrar Caja
+                            </a>
+                        </li>
+                        <li><a href="javascript:void()">Account Setting</a></li>
+                        <li><a href="javascript:void()" (click)="intentarCerrarSesion()">Logout</a></li>
+                    </ul>
+                </li>
+                <li class="nav-devider"></li>
+                <li class="nav-small-cap">MENÚ PRINCIPAL</li>
+                <li *ngFor="let item of menuVisible" routerLinkActive="active">
+                    <a [routerLink]="item.Ruta" class="waves-effect waves-dark">
+                        <i [ngClass]="item.Icono"></i>
+                        <span class="hide-menu">{{ item.Etiqueta }}</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</aside>
+
+<!-- Panel de cierre de caja (overlay simple) -->
+<div class="modal-backdrop-custom" *ngIf="mostrarPanelCierre"
+    style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1050; display: flex; align-items: center; justify-content: center;">
+    <div class="card" style="width: 400px; max-width: 90vw;">
+        <div class="card-body">
+            <h5 class="card-title fw-bold">🔒 Cerrar Caja</h5>
+            <p class="text-muted small">Base inicial del turno: <strong>${{ turnoActual?.BaseInicial | number
+                    }}</strong></p>
+
+            <div class="mb-2">
+                <label class="form-label small fw-bold">Total ventas en efectivo (calculado)</label>
+                <input type="text" class="form-control form-control-sm bg-light fw-bold"
+                    [value]="cargandoResumen ? 'Calculando...' : ('$' + (totalEfectivoSistema | number))" readonly>
+            </div>
+            <div class="mb-2">
+                <label class="form-label small fw-bold">Total ventas digitales (calculado)</label>
+                <input type="text" class="form-control form-control-sm bg-light fw-bold"
+                    [value]="cargandoResumen ? 'Calculando...' : ('$' + (totalDigitalSistema | number))" readonly>
+            </div>
+            <div class="mb-3">
+                <label class="form-label small fw-bold">Dinero real contado en la gaveta</label>
+                <input type="number" class="form-control form-control-sm" [(ngModel)]="montoFinalReal">
+            </div>
+
+            <div class="d-flex gap-2">
+                <button class="btn btn-secondary btn-sm w-50" (click)="cerrarPanelCierre()">Cancelar</button>
+                <button class="btn btn-danger btn-sm w-50 fw-bold" (click)="confirmarCierreCaja()"
+                    [disabled]="cerrandoCaja">
+                    {{ cerrandoCaja ? 'Cerrando...' : 'Confirmar Cierre' }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

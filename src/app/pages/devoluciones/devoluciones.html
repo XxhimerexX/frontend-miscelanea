@@ -1,0 +1,222 @@
+<!-- ============================= VISTA: LISTADO ============================= -->
+<div *ngIf="vista === 'lista'">
+  <div class="card">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+          <h4 class="card-title mb-0">↩️ Devoluciones y Garantías</h4>
+          <h6 class="card-subtitle text-muted">Devoluciones sobre facturas ya emitidas</h6>
+        </div>
+        <button class="btn btn-primary fw-bold" (click)="mostrarFormularioNueva()" *ngIf="authService.tienePermiso('devoluciones.crear')">
+          + Nueva Devolución
+        </button>
+      </div>
+
+      <div class="btn-group mb-3" role="group">
+        <button type="button" class="btn btn-sm" [ngClass]="filtroEstado === '' ? 'btn-dark' : 'btn-outline-dark'" (click)="cambiarFiltro('')">Todas</button>
+        <button type="button" class="btn btn-sm" [ngClass]="filtroEstado === 'PENDIENTE' ? 'btn-warning' : 'btn-outline-warning'" (click)="cambiarFiltro('PENDIENTE')">Pendientes</button>
+        <button type="button" class="btn btn-sm" [ngClass]="filtroEstado === 'AUTORIZADA' ? 'btn-success' : 'btn-outline-success'" (click)="cambiarFiltro('AUTORIZADA')">Autorizadas</button>
+        <button type="button" class="btn btn-sm" [ngClass]="filtroEstado === 'RECHAZADA' ? 'btn-danger' : 'btn-outline-danger'" (click)="cambiarFiltro('RECHAZADA')">Rechazadas</button>
+      </div>
+
+      <div class="table-responsive" style="max-height: 550px; overflow-y: auto;">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Fecha</th>
+              <th>Factura</th>
+              <th>Creada por</th>
+              <th>Autorizada/Rechazada por</th>
+              <th>Estado</th>
+              <th class="text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let dev of listaDevoluciones">
+              <td>{{ dev.FechaRegistro | date:'short' }}</td>
+              <td class="fw-bold">{{ dev.NumeroFactura }}</td>
+              <td>{{ dev.Usuario }}</td>
+              <td>{{ dev.UsuarioAutoriza || '—' }}</td>
+              <td>
+                <span class="badge"
+                  [ngClass]="{
+                    'bg-warning text-dark': dev.Estado === 'PENDIENTE',
+                    'bg-success': dev.Estado === 'AUTORIZADA',
+                    'bg-danger': dev.Estado === 'RECHAZADA'
+                  }">
+                  {{ dev.Estado }}
+                </span>
+              </td>
+              <td class="text-center">
+                <button class="btn btn-sm btn-outline-primary" (click)="verDetalle(dev.Id)">🔍 Ver Detalle</button>
+              </td>
+            </tr>
+            <tr *ngIf="listaDevoluciones.length === 0">
+              <td colspan="6" class="text-center text-muted py-4">No hay devoluciones registradas.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================= VISTA: NUEVA DEVOLUCIÓN ============================= -->
+<div *ngIf="vista === 'nueva'">
+  <div class="card">
+    <div class="card-body">
+      <h4 class="card-title">🔍 Buscar Factura</h4>
+      <h6 class="card-subtitle text-muted mb-3">Ingresa el número de factura de la venta original</h6>
+
+      <div class="input-group mb-3" style="max-width: 500px;">
+        <input type="text" class="form-control" placeholder="Ej. FAC-20260801-3910"
+          [(ngModel)]="numeroFactura" name="numeroFactura" (keyup.enter)="buscarVenta()">
+        <button class="btn btn-primary" type="button" (click)="buscarVenta()" [disabled]="buscandoVenta">
+          {{ buscandoVenta ? 'Buscando...' : 'Buscar' }}
+        </button>
+      </div>
+
+      <div *ngIf="ventaEncontrada" class="mb-3 p-3 bg-light rounded border">
+        <p class="mb-1"><strong>Factura:</strong> {{ ventaEncontrada.NumeroFactura }}</p>
+        <p class="mb-1"><strong>Fecha:</strong> {{ ventaEncontrada.FechaVenta | date:'medium' }}</p>
+        <p class="mb-0"><strong>Total:</strong> ${{ ventaEncontrada.Total | number:'1.2-2' }}</p>
+      </div>
+
+      <div *ngIf="lineasDevolucion.length > 0" class="table-responsive">
+          <table class="table table-sm align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Producto</th>
+                <th class="text-center">Pendiente</th>
+                <th style="width: 90px;">Devolver</th>
+                <th style="width: 170px;">Motivo</th>
+                <th class="text-center">¿Reingresa a stock?</th>
+                <th style="width: 140px;">Resolución</th>
+                <th style="width: 180px;">Producto de reemplazo</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let linea of lineasDevolucion">
+                <td><small>{{ linea.productoNombre }}</small></td>
+                <td class="text-center">{{ linea.cantidadPendiente }}</td>
+                <td>
+                  <input type="number" class="form-control form-control-sm" [(ngModel)]="linea.cantidadADevolver"
+                    [name]="'cant-' + linea.detalleVentaId" min="0" [max]="linea.cantidadPendiente">
+                </td>
+                <td>
+                  <select class="form-select form-select-sm" [(ngModel)]="linea.motivoCodigo" [name]="'motivo-' + linea.detalleVentaId">
+                    <option value="" disabled>Selecciona...</option>
+                    <option *ngFor="let m of motivos" [value]="m.codigo">{{ m.etiqueta }}</option>
+                  </select>
+                </td>
+                <td class="text-center">
+                  <input type="checkbox" class="filled-in chk-col-light-blue" [id]="'reingresa-' + linea.detalleVentaId"
+                    [(ngModel)]="linea.reingresaStock" [name]="'reingresa-' + linea.detalleVentaId">
+                  <label [for]="'reingresa-' + linea.detalleVentaId" style="padding-left: 35px;"></label>
+                </td>
+                <td>
+                  <select class="form-select form-select-sm" [(ngModel)]="linea.tipoResolucion" [name]="'resolucion-' + linea.detalleVentaId">
+                    <option value="REEMBOLSO">Reembolso</option>
+                    <option value="CAMBIO">Cambio</option>
+                  </select>
+                </td>
+                <td>
+                  <select class="form-select form-select-sm" *ngIf="linea.tipoResolucion === 'CAMBIO'"
+                    [(ngModel)]="linea.productoReemplazoId" [name]="'reemplazo-' + linea.detalleVentaId">
+                    <option [ngValue]="null" disabled>Selecciona un producto...</option>
+                    <option *ngFor="let prod of listaProductos" [ngValue]="prod.Id">{{ prod.Nombre }}</option>
+                  </select>
+                  <span *ngIf="linea.tipoResolucion !== 'CAMBIO'" class="text-muted">—</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" *ngIf="lineasDevolucion.length > 0">
+    <div class="card-body">
+      <h4 class="card-title">📋 Observaciones</h4>
+      <div class="mb-3" style="max-width: 600px;">
+        <textarea class="form-control" rows="3" [(ngModel)]="observaciones" name="observaciones"
+          placeholder="Notas adicionales sobre esta devolución..."></textarea>
+      </div>
+
+      <div class="d-flex gap-2">
+        <button class="btn btn-primary fw-bold" (click)="guardarDevolucion()">
+          Registrar Devolución
+        </button>
+        <button class="btn btn-secondary" (click)="vista = 'lista'">Cancelar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================= VISTA: DETALLE ============================= -->
+<div *ngIf="vista === 'detalle' && devolucionSeleccionada" class="row">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="card-title mb-0">↩️ Devolución #{{ devolucionSeleccionada.Id }}</h4>
+          <button class="btn btn-sm btn-outline-secondary" (click)="volverALista()">← Volver al listado</button>
+        </div>
+
+        <div class="mb-3 p-3 bg-light rounded border">
+          <p class="mb-1"><strong>Factura de origen:</strong> {{ devolucionSeleccionada.NumeroFactura }}</p>
+          <p class="mb-1"><strong>Creada por:</strong> {{ devolucionSeleccionada.Usuario }} el {{ devolucionSeleccionada.FechaRegistro | date:'medium' }}</p>
+          <p class="mb-1" *ngIf="devolucionSeleccionada.UsuarioAutoriza">
+            <strong>{{ devolucionSeleccionada.Estado === 'RECHAZADA' ? 'Rechazada' : 'Autorizada' }} por:</strong>
+            {{ devolucionSeleccionada.UsuarioAutoriza }} el {{ devolucionSeleccionada.FechaAutorizacion | date:'medium' }}
+          </p>
+          <p class="mb-1"><strong>Estado:</strong>
+            <span class="badge"
+              [ngClass]="{
+                'bg-warning text-dark': devolucionSeleccionada.Estado === 'PENDIENTE',
+                'bg-success': devolucionSeleccionada.Estado === 'AUTORIZADA',
+                'bg-danger': devolucionSeleccionada.Estado === 'RECHAZADA'
+              }">
+              {{ devolucionSeleccionada.Estado }}
+            </span>
+          </p>
+          <p class="mb-0" *ngIf="devolucionSeleccionada.Observaciones"><strong>Observaciones:</strong> {{ devolucionSeleccionada.Observaciones }}</p>
+        </div>
+
+        <h6 class="fw-bold mb-2">Líneas devueltas:</h6>
+        <div class="table-responsive mb-3" style="max-height: 350px; overflow-y: auto;">
+          <table class="table table-sm table-bordered align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Producto</th>
+                <th class="text-center">Cant.</th>
+                <th>Motivo</th>
+                <th class="text-center">Reingresó a stock</th>
+                <th>Resolución</th>
+                <th>Reemplazo</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of devolucionSeleccionada.items">
+                <td>{{ item.ProductoNombre }}</td>
+                <td class="text-center">{{ item.Cantidad }}</td>
+                <td>{{ item.MotivoCodigo }}</td>
+                <td class="text-center">{{ item.ReingresaStock ? 'Sí' : 'No' }}</td>
+                <td>{{ item.TipoResolucion }}</td>
+                <td>{{ item.ProductoReemplazoNombre || '—' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="d-flex gap-2" *ngIf="devolucionSeleccionada.Estado === 'PENDIENTE' && authService.tienePermiso('devoluciones.autorizar')">
+          <button class="btn btn-success fw-bold" (click)="autorizar()">✔️ Autorizar Devolución</button>
+          <button class="btn btn-outline-danger fw-bold" (click)="rechazar()">✖️ Rechazar</button>
+        </div>
+        <div class="alert alert-warning py-2 mb-0" *ngIf="devolucionSeleccionada.Estado === 'PENDIENTE' && !authService.tienePermiso('devoluciones.autorizar')">
+          Esta devolución está pendiente de autorización por un usuario con permisos de Almacén o Administrador.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,167 @@
+<!-- Estado: verificando caja -->
+<div class="text-center py-5" *ngIf="verificandoCaja">
+  <p class="text-muted">Verificando estado de la caja...</p>
+</div>
+
+<!-- Estado: caja cerrada, bloquea el POS -->
+<div class="row justify-content-center" *ngIf="!verificandoCaja && !cajaAbierta">
+  <div class="col-md-6">
+    <div class="card border-warning">
+      <div class="card-body text-center">
+        <h4 class="card-title text-warning">⚠️ Caja Cerrada</h4>
+        <p class="text-muted">Debes abrir un turno de caja antes de poder registrar ventas.</p>
+
+        <div class="mb-3 text-start">
+          <label class="form-label fw-bold">Base Inicial (efectivo con el que arranca el turno)</label>
+          <input
+            type="number"
+            class="form-control"
+            [(ngModel)]="baseInicialApertura"
+            placeholder="Ej. 50000"
+            min="0">
+        </div>
+
+        <button
+          class="btn btn-success w-100 fw-bold"
+          (click)="confirmarAperturaCaja()"
+          [disabled]="abriendoCaja">
+          {{ abriendoCaja ? 'Abriendo caja...' : '🔓 Abrir Caja' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Estado: caja abierta, POS normal -->
+<div class="row" *ngIf="!verificandoCaja && cajaAbierta">
+  <!-- Columna Izquierda: Catálogo y Búsqueda de Productos -->
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-body">
+        <h4 class="card-title">🔍 Catálogo y Búsqueda Rápida</h4>
+
+        <div class="input-group mb-3">
+          <input
+            type="text"
+            class="form-control"
+            placeholder="Buscar por nombre o código de barras..."
+            [(ngModel)]="terminoBusqueda"
+            (keyup.enter)="buscar()">
+          <button class="btn btn-primary" type="button" (click)="buscar()">Buscar</button>
+        </div>
+
+        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+          <table class="table table-hover stylish-table">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Código</th>
+                <th>Precio</th>
+                <th>Stock</th>
+                <th class="text-center">Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let prod of productosEncontrados">
+                <td><h6 class="mb-0">{{ prod.Nombre }}</h6></td>
+                <td><span class="badge bg-secondary">{{ prod.CodigoBarras || 'N/A' }}</span></td>
+                <td class="text-success fw-bold">${{ prod.PrecioVenta | number }}</td>
+                <td>
+                  <span [ngClass]="{'badge bg-danger': prod.Stock <= (prod.StockMinimo || 5), 'badge bg-success': prod.Stock > (prod.StockMinimo || 5)}">
+                    {{ prod.Stock }} un.
+                  </span>
+                </td>
+                <td class="text-center">
+                  <button class="btn btn-sm btn-success" (click)="agregarAlCarrito(prod)" [disabled]="prod.Stock <= 0">
+                    <i class="mdi mdi-cart-plus"></i> Agregar
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Columna Derecha: Carrito de Compras y Cobro -->
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-body">
+        <h4 class="card-title">🛒 Carrito de Venta Actual</h4>
+
+        <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th>Cant</th>
+                <th>Subtotal</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of carrito; let i = index">
+                <td>
+                  <small class="fw-bold">{{ item.Nombre }}</small><br>
+                  <small class="text-muted">${{ item.PrecioVenta | number }}</small>
+                </td>
+                <td>
+                  <div class="input-group input-group-sm" style="width: 80px;">
+                    <button class="btn btn-outline-secondary px-1" type="button" (click)="actualizarCantidad(item, -1)">-</button>
+                    <input type="text" class="form-control text-center p-0" [value]="item.Cantidad" readonly>
+                    <button class="btn btn-outline-secondary px-1" type="button" (click)="actualizarCantidad(item, 1)">+</button>
+                  </div>
+                </td>
+                <td class="fw-bold">${{ item.PrecioVenta * item.Cantidad | number }}</td>
+                <td>
+                  <button class="btn btn-danger btn-sm p-1" (click)="eliminarDelCarrito(i)">
+                    <i class="mdi mdi-delete"></i>
+                  </button>
+                </td>
+              </tr>
+              <tr *ngIf="carrito.length === 0">
+                <td colspan="4" class="text-center text-muted py-3">El carrito está vacío</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <hr>
+
+        <div class="d-flex justify-content-between mb-2">
+          <h5 class="fw-bold mb-0">Total a Pagar:</h5>
+          <h4 class="fw-bold text-success mb-0">${{ totalPagar | number }}</h4>
+        </div>
+
+        <div class="mb-2">
+          <label class="form-label fw-bold text-muted small mb-1">Método de Pago</label>
+          <select class="form-select form-select-sm" [(ngModel)]="metodoPagoId">
+            <option *ngFor="let metodo of listaMetodosPago" [value]="metodo.Id">
+              {{ metodo.Nombre }}
+            </option>
+          </select>
+        </div>
+
+        <div *ngIf="metodoPagoId == 1" class="mb-3 bg-light p-2 rounded border">
+          <div class="mb-1">
+            <label class="form-label fw-bold text-muted small mb-1">Dinero Recibido (Billete):</label>
+            <input
+              type="number"
+              class="form-control form-control-sm fw-bold text-primary"
+              [(ngModel)]="montoRecibido"
+              placeholder="Ej. 50000">
+          </div>
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="fw-bold text-danger small">Su Cambio:</span>
+            <span class="fw-bold text-danger fs-6">${{ calcularCambio() | number }}</span>
+          </div>
+        </div>
+
+        <button class="btn btn-success w-100 py-2 fw-bold" (click)="procesarVenta()" [disabled]="carrito.length === 0">
+          Procesar Venta y Cobrar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

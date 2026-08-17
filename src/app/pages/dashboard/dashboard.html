@@ -1,0 +1,77 @@
+<div class="row page-titles">
+  <div class="col-md-6 align-self-center">
+    <h3 class="text-themecolor">Panel de Control</h3>
+  </div>
+</div>
+
+<!-- Tarjetas KPI -->
+<div class="row">
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex no-block">
+          <div class="m-r-20 align-self-center"><span class="lstick m-r-20"></span><img src="assets/images/icon/income.png" alt="Ventas" /></div>
+          <div class="align-self-center">
+            <h6 class="text-muted m-t-10 m-b-0">Ventas del Día</h6>
+            <h2 class="m-t-0">${{ totalVentasDia | number }}</h2>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex no-block">
+          <div class="m-r-20 align-self-center"><span class="lstick m-r-20"></span><img [src]="cajaAbierta ? 'assets/images/icon/assets.png' : 'assets/images/icon/expense.png'" alt="Caja" /></div>
+          <div class="align-self-center">
+            <h6 class="text-muted m-t-10 m-b-0">Estado de Caja</h6>
+            <h2 class="m-t-0" [ngClass]="cajaAbierta ? 'text-success' : 'text-danger'">
+              {{ cajaAbierta ? 'Abierta' : 'Cerrada' }}
+            </h2>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex no-block">
+          <div class="m-r-20 align-self-center"><span class="lstick m-r-20"></span><img src="assets/images/icon/staff.png" alt="Stock" /></div>
+          <div class="align-self-center">
+            <h6 class="text-muted m-t-10 m-b-0">Productos con Stock Bajo</h6>
+            <h2 class="m-t-0" [ngClass]="productosStockBajo > 0 ? 'text-danger' : ''">{{ productosStockBajo }}</h2>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Gráfica de ventas -->
+<div class="row">
+  <div class="col-md-12">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex">
+          <div>
+            <h4 class="card-title"><span class="lstick"></span>Comportamiento de Ventas</h4>
+          </div>
+          <div class="ml-auto">
+            <select class="custom-select b-0" [(ngModel)]="filtroPeriodo" (change)="cambiarFiltroPeriodo()">
+              <option value="dia">Por Día</option>
+              <option value="mes" selected>Por Mes</option>
+              <option value="anio">Por Año</option>
+            </select>
+          </div>
+        </div>
+        <div style="position: relative; height: 350px; width: 100%;">
+          <canvas id="ventasChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

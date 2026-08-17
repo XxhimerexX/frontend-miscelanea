@@ -1,0 +1,32 @@
+.ticket-container {
+  max-width: 300px;
+  margin: 0 auto;
+  background: #fff;
+  padding: 15px;
+  font-family: 'Courier New', Courier, monospace;
+  border: 1px solid #ddd;
+}
+
+.dashed-hr {
+  border-top: 1px dashed #000;
+}
+
+/* Regla crítica para que al imprimir solo salga el ticket y no la interfaz de Angular */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .ticket-container, .ticket-container * {
+    visibility: visible;
+  }
+  .ticket-container {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    border: none;
+  }
+  .no-print {
+    display: none !important;
+  }
+}

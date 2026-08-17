@@ -1,0 +1,111 @@
+<div class="row">
+    <!-- Columna Izquierda: Formulario -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">
+                    {{ modoEdicion ? '✏️ Actualizar Proveedor' : '➕ Registrar Nuevo Proveedor' }}
+                </h4>
+                <h6 class="card-subtitle text-muted mb-3">Datos del proveedor</h6>
+
+                <form (ngSubmit)="guardarProveedor()">
+                    <div class="mb-3">
+                        <label class="form-label">Razón Social *</label>
+                        <input type="text" class="form-control" [(ngModel)]="proveedorForm.RazonSocial"
+                            name="RazonSocial" placeholder="Ej. Distribuidora ABC S.A.S" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">NIT *</label>
+                        <input type="text" class="form-control" [(ngModel)]="proveedorForm.NIT" name="NIT"
+                            placeholder="Ej. 900123456-1" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Teléfono</label>
+                        <input type="text" class="form-control" [(ngModel)]="proveedorForm.Telefono" name="Telefono">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Correo</label>
+                        <input type="email" class="form-control" [(ngModel)]="proveedorForm.Correo" name="Correo">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Dirección</label>
+                        <input type="text" class="form-control" [(ngModel)]="proveedorForm.Direccion" name="Direccion">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Contacto</label>
+                        <input type="text" class="form-control" [(ngModel)]="proveedorForm.Contacto" name="Contacto"
+                            placeholder="Nombre de la persona de contacto">
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary fw-bold">
+                            {{ modoEdicion ? 'Actualizar Cambios' : 'Guardar Proveedor' }}
+                        </button>
+                        <button type="button" class="btn btn-secondary" *ngIf="modoEdicion" (click)="resetFormulario()">
+                            Cancelar Edición
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Columna Derecha: Listado de Proveedores -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">🚚 Proveedores</h4>
+                <h6 class="card-subtitle text-muted mb-3">Listado sincronizado con la base de datos</h6>
+
+                <div class="table-responsive" style="max-height: 550px; overflow-y: auto;">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Razón Social</th>
+                                <th>NIT</th>
+                                <th>Teléfono</th>
+                                <th>Contacto</th>
+                                <th>Estado</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let prov of listaProveedores" [ngClass]="{'table-secondary text-muted': !prov.Activo}">
+                                <td>
+                                    <h6 class="mb-0 fw-bold">{{ prov.RazonSocial }}</h6>
+                                    <small class="text-muted">{{ prov.Correo }}</small>
+                                </td>
+                                <td>{{ prov.NIT }}</td>
+                                <td>{{ prov.Telefono || '—' }}</td>
+                                <td>{{ prov.Contacto || '—' }}</td>
+                                <td>
+                                    <span [ngClass]="prov.Activo ? 'badge bg-success' : 'badge bg-secondary'">
+                                        {{ prov.Activo ? 'Activo' : 'Inactivo' }}
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <button class="btn btn-sm btn-warning me-2 text-white"
+                                        (click)="seleccionarParaEditar(prov)" title="Editar">
+                                        Editar
+                                    </button>
+                                    <button class="btn btn-sm" [ngClass]="prov.Activo ? 'btn-danger' : 'btn-success'"
+                                        (click)="cambiarEstado(prov)" [title]="prov.Activo ? 'Desactivar' : 'Activar'">
+                                        {{ prov.Activo ? 'Desactivar' : 'Activar' }}
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr *ngIf="listaProveedores.length === 0">
+                                <td colspan="6" class="text-center text-muted py-4">No hay proveedores registrados.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

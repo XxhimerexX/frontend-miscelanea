@@ -1,0 +1,41 @@
+<section class="login-tedi-wrapper">
+  <div class="login-tedi-image-col">
+    <img src="../assets/images/logintedi.png" alt="Tedi Holding Family" class="login-tedi-image">
+  </div>
+
+  <div class="login-tedi-panel">
+    <div class="login-box card">
+      <div class="card-body">
+        <form class="form-horizontal form-material" (ngSubmit)="iniciarSesion()">
+          <a href="javascript:void(0)" class="text-center db">
+            <img src="../assets/images/logo-icon.png" alt="Home"><br>
+            <img src="../assets/images/logo-text.png" alt="Home">
+          </a>
+
+          <div class="alert alert-danger py-2 m-t-20" *ngIf="errorMensaje">{{ errorMensaje }}</div>
+
+          <div class="form-group m-t-40">
+            <div class="col-xs-12">
+              <input class="form-control" type="email" [(ngModel)]="correo" name="correo" required
+                placeholder="Correo">
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="col-xs-12">
+              <input class="form-control" type="password" [(ngModel)]="contrasena" name="contrasena" required
+                placeholder="Contraseña">
+            </div>
+          </div>
+          <div class="form-group text-center m-t-20">
+            <div class="col-xs-12">
+              <button class="btn btn-info btn-lg btn-block text-uppercase btn-rounded" type="submit"
+                [disabled]="cargando">
+                {{ cargando ? 'Ingresando...' : 'Log In' }}
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>

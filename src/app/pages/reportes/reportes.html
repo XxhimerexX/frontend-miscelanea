@@ -1,0 +1,340 @@
+<div class="row page-titles">
+  <div class="col-md-6 align-self-center">
+    <h3 class="text-themecolor">Reportes</h3>
+  </div>
+</div>
+
+<!-- Selector de fechas compartido -->
+<div class="card">
+  <div class="card-body">
+    <div class="d-flex flex-wrap align-items-center gap-2">
+      <div class="d-flex align-items-center gap-2">
+        <label class="mb-0">Desde</label>
+        <input type="date" class="form-control form-control-sm" style="width: 160px;" [(ngModel)]="fechaInicio" (change)="recargarTabActiva()">
+        <label class="mb-0">Hasta</label>
+        <input type="date" class="form-control form-control-sm" style="width: 160px;" [(ngModel)]="fechaFin" (change)="recargarTabActiva()">
+      </div>
+      <div class="btn-group ml-auto" role="group">
+        <button type="button" class="btn btn-sm btn-outline-dark" (click)="aplicarRangoHoy()">Hoy</button>
+        <button type="button" class="btn btn-sm btn-outline-dark" (click)="aplicarRangoSemana()">Última semana</button>
+        <button type="button" class="btn btn-sm btn-outline-dark" (click)="aplicarRangoMes()">Último mes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Pestañas -->
+<ul class="nav nav-tabs mb-3">
+  <li class="nav-item">
+    <a class="nav-link" [class.active]="tabActiva === 'periodo'" href="javascript:void(0)" (click)="cambiarTab('periodo')">Ventas por período</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" [class.active]="tabActiva === 'productos'" href="javascript:void(0)" (click)="cambiarTab('productos')">Ventas por producto/categoría</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" [class.active]="tabActiva === 'margenes'" href="javascript:void(0)" (click)="cambiarTab('margenes')">Márgenes de ganancia</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" [class.active]="tabActiva === 'kardex'" href="javascript:void(0)" (click)="cambiarTab('kardex')">Kardex de inventario</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" [class.active]="tabActiva === 'stock'" href="javascript:void(0)" (click)="cambiarTab('stock')">Stock bajo / Baja rotación</a>
+  </li>
+</ul>
+
+<!-- ============================= VENTAS POR PERÍODO ============================= -->
+<div *ngIf="tabActiva === 'periodo'">
+  <div class="row">
+    <div class="col-lg-4">
+      <div class="card">
+        <div class="card-body">
+          <div class="d-flex no-block">
+            <div class="m-r-20 align-self-center"><span class="lstick m-r-20"></span></div>
+            <div class="align-self-center">
+              <h6 class="text-muted m-t-10 m-b-0">Total vendido</h6>
+              <h2 class="m-t-0">${{ totalVendidoPeriodo | number }}</h2>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="card">
+        <div class="card-body">
+          <div class="d-flex no-block">
+            <div class="m-r-20 align-self-center"><span class="lstick m-r-20"></span></div>
+            <div class="align-self-center">
+              <h6 class="text-muted m-t-10 m-b-0">Número de facturas</h6>
+              <h2 class="m-t-0">{{ facturasPeriodo }}</h2>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="card">
+        <div class="card-body">
+          <div class="d-flex no-block">
+            <div class="m-r-20 align-self-center"><span class="lstick m-r-20"></span></div>
+            <div class="align-self-center">
+              <h6 class="text-muted m-t-10 m-b-0">Ticket promedio</h6>
+              <h2 class="m-t-0">${{ ticketPromedioPeriodo | number:'1.0-0' }}</h2>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <div class="d-flex">
+        <h4 class="card-title"><span class="lstick"></span>Ventas por período</h4>
+        <div class="ml-auto">
+          <select class="custom-select b-0" [(ngModel)]="filtroPeriodo" (change)="cargarVentasPeriodo()">
+            <option value="dia">Por Día</option>
+            <option value="semana">Por Semana</option>
+            <option value="mes">Por Mes</option>
+          </select>
+        </div>
+      </div>
+      <div style="position: relative; height: 350px; width: 100%;">
+        <canvas id="chartVentasPeriodo"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================= VENTAS POR PRODUCTO/CATEGORÍA ============================= -->
+<div *ngIf="tabActiva === 'productos'">
+  <div class="card">
+    <div class="card-body">
+      <div class="d-flex">
+        <h4 class="card-title"><span class="lstick"></span>Top productos/categorías vendidos</h4>
+        <div class="ml-auto">
+          <select class="custom-select b-0" [(ngModel)]="agruparProductos" (change)="cargarVentasProductos()">
+            <option value="producto">Por Producto</option>
+            <option value="categoria">Por Categoría</option>
+          </select>
+        </div>
+      </div>
+      <div style="position: relative; height: 350px; width: 100%;">
+        <canvas id="chartVentasProductos"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <h4 class="card-title mb-3"><span class="lstick"></span>Detalle</h4>
+      <div class="table-responsive" style="max-height: 450px; overflow-y: auto;">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th *ngIf="agruparProductos === 'producto'">Producto</th>
+              <th>Categoría</th>
+              <th class="text-end">Unidades vendidas</th>
+              <th class="text-end">Total vendido</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let fila of datosProductos">
+              <td *ngIf="agruparProductos === 'producto'">{{ fila.Producto }}</td>
+              <td>{{ fila.Categoria }}</td>
+              <td class="text-end">{{ fila.UnidadesVendidas }}</td>
+              <td class="text-end">${{ fila.TotalVendido | number }}</td>
+            </tr>
+            <tr *ngIf="datosProductos.length === 0">
+              <td colspan="4" class="text-center text-muted py-4">Sin ventas en el rango seleccionado.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================= MÁRGENES DE GANANCIA ============================= -->
+<div *ngIf="tabActiva === 'margenes'">
+  <div class="card">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="card-title mb-0"><span class="lstick"></span>Márgenes de ganancia</h4>
+        <select class="custom-select b-0" style="width: auto;" [(ngModel)]="agruparMargenes" (change)="cargarMargenes()">
+          <option value="producto">Por Producto</option>
+          <option value="categoria">Por Categoría</option>
+        </select>
+      </div>
+      <p class="text-muted small mb-3">
+        Las filas marcadas con <span class="badge bg-warning text-dark">aprox.</span> incluyen ventas registradas antes de
+        activar el costo histórico; para esas líneas se usó el costo actual del producto como aproximación.
+      </p>
+      <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th *ngIf="agruparMargenes === 'producto'">Producto</th>
+              <th>Categoría</th>
+              <th class="text-end">Unidades</th>
+              <th class="text-end">Total vendido</th>
+              <th class="text-end">Costo total</th>
+              <th class="text-end">Margen</th>
+              <th class="text-center">Costo</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let fila of datosMargenes">
+              <td *ngIf="agruparMargenes === 'producto'">{{ fila.Producto }}</td>
+              <td>{{ fila.Categoria }}</td>
+              <td class="text-end">{{ fila.UnidadesVendidas }}</td>
+              <td class="text-end">${{ fila.TotalVendido | number }}</td>
+              <td class="text-end">${{ fila.CostoTotal | number:'1.0-2' }}</td>
+              <td class="text-end fw-bold" [ngClass]="fila.MargenTotal >= 0 ? 'text-success' : 'text-danger'">
+                ${{ fila.MargenTotal | number:'1.0-2' }}
+              </td>
+              <td class="text-center">
+                <span class="badge bg-warning text-dark" *ngIf="fila.LineasConCostoAproximado > 0">aprox.</span>
+                <span class="badge bg-success" *ngIf="fila.LineasConCostoAproximado === 0">exacto</span>
+              </td>
+            </tr>
+            <tr *ngIf="datosMargenes.length === 0">
+              <td colspan="7" class="text-center text-muted py-4">Sin ventas en el rango seleccionado.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================= KARDEX ============================= -->
+<div *ngIf="tabActiva === 'kardex'">
+  <div class="card">
+    <div class="card-body">
+      <div class="d-flex align-items-center gap-2 mb-3">
+        <h4 class="card-title mb-0"><span class="lstick"></span>Kardex de inventario</h4>
+        <select class="custom-select b-0 ml-auto" style="width: auto; min-width: 250px;" [(ngModel)]="productoKardexId" (change)="cargarKardex()">
+          <option [ngValue]="null" disabled>Selecciona un producto...</option>
+          <option *ngFor="let prod of listaProductos" [ngValue]="prod.Id">{{ prod.Nombre }}</option>
+        </select>
+      </div>
+
+      <div class="alert alert-info py-2" *ngIf="!productoKardexId">
+        Selecciona un producto para ver su historial de movimientos.
+      </div>
+
+      <div *ngIf="productoKardexId">
+        <p class="text-muted small mb-3">
+          El saldo mostrado corresponde a los movimientos registrados en el sistema (ventas, compras recibidas y
+          devoluciones). Si el producto tuvo stock inicial cargado manualmente al crearlo, ese ajuste no aparece aquí y el
+          saldo puede no coincidir con el stock actual del inventario.
+        </p>
+        <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+          <table class="table table-sm table-hover align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Fecha</th>
+                <th>Tipo</th>
+                <th>Referencia</th>
+                <th class="text-end">Cantidad</th>
+                <th class="text-end">Saldo acumulado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let mov of datosKardex">
+                <td>{{ mov.Fecha | date:'short' }}</td>
+                <td>
+                  <span class="badge"
+                    [ngClass]="{
+                      'bg-danger': mov.Tipo === 'VENTA' || mov.Tipo === 'DEVOLUCION_CAMBIO',
+                      'bg-success': mov.Tipo === 'COMPRA' || mov.Tipo === 'DEVOLUCION_INGRESO'
+                    }">
+                    {{ mov.Tipo }}
+                  </span>
+                </td>
+                <td>{{ mov.Referencia }}</td>
+                <td class="text-end">{{ mov.Cantidad }}</td>
+                <td class="text-end fw-bold">{{ mov.SaldoAcumulado }}</td>
+              </tr>
+              <tr *ngIf="datosKardex.length === 0">
+                <td colspan="5" class="text-center text-muted py-4">Sin movimientos registrados para este producto en el rango seleccionado.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================= STOCK BAJO / BAJA ROTACIÓN ============================= -->
+<div *ngIf="tabActiva === 'stock'" class="row">
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-body">
+        <h4 class="card-title mb-3"><span class="lstick"></span>Productos con stock bajo</h4>
+        <div class="table-responsive" style="max-height: 450px; overflow-y: auto;">
+          <table class="table table-sm table-hover align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Producto</th>
+                <th>Categoría</th>
+                <th class="text-end">Stock</th>
+                <th class="text-end">Mínimo</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let p of datosStockBajo">
+                <td>{{ p.Nombre }}</td>
+                <td>{{ p.Categoria }}</td>
+                <td class="text-end text-danger fw-bold">{{ p.Stock }}</td>
+                <td class="text-end">{{ p.StockMinimo }}</td>
+              </tr>
+              <tr *ngIf="datosStockBajo.length === 0">
+                <td colspan="4" class="text-center text-muted py-4">No hay productos con stock bajo.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <h4 class="card-title mb-0"><span class="lstick"></span>Baja rotación</h4>
+          <div class="ml-auto d-flex align-items-center gap-2">
+            <label class="mb-0 text-nowrap">Sin ventas en</label>
+            <input type="number" class="form-control form-control-sm" style="width: 80px;" [(ngModel)]="diasBajaRotacion" (change)="cargarBajaRotacion()" min="1">
+            <label class="mb-0">días</label>
+          </div>
+        </div>
+        <div class="table-responsive" style="max-height: 450px; overflow-y: auto;">
+          <table class="table table-sm table-hover align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Producto</th>
+                <th>Categoría</th>
+                <th class="text-end">Stock</th>
+                <th>Última venta</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let p of datosBajaRotacion">
+                <td>{{ p.Nombre }}</td>
+                <td>{{ p.Categoria }}</td>
+                <td class="text-end">{{ p.Stock }}</td>
+                <td>{{ p.UltimaVenta ? (p.UltimaVenta | date:'short') : 'Nunca vendido' }}</td>
+              </tr>
+              <tr *ngIf="datosBajaRotacion.length === 0">
+                <td colspan="4" class="text-center text-muted py-4">No hay productos de baja rotación.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
