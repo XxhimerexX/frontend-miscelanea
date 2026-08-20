@@ -63,16 +63,7 @@ export class Ventas {
     });
   }
 
-  verTicketPdf(id: number) {
-  this.miscelaneaService.descargarTicketPdf(id).subscribe({
-    next: (blob) => {
-      const url = window.URL.createObjectURL(blob);
-      window.open(url, '_blank');
-    },
-    error: (err) => {
-      console.error('Error al abrir el ticket', err);
-      this.alertService.error('No se pudo abrir el ticket PDF: ' + (err.error?.error || err.message));
-    }
-  });
-}
+  verTicket(id: number) {
+    window.open(`/ticket/${id}`, '_blank');
+  }
 }

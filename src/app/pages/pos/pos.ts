@@ -200,11 +200,11 @@ async confirmarAperturaCaja() {
     this.miscelaneaService.registrarVenta(payloadVenta).subscribe({
       next: (res: any) => {
         this.alertService.confirmar(
-          `Factura: ${res.numeroFactura || facturaGenerada}\n\n¿Desea abrir e imprimir el ticket PDF ahora?`,
+          `Factura: ${res.numeroFactura || facturaGenerada}\n\n¿Desea abrir e imprimir el ticket ahora?`,
           '¡Venta procesada con éxito!'
         ).then((deseaImprimir) => {
           if (deseaImprimir && res.ventaId) {
-            this.abrirTicketPdf(res.ventaId);
+            this.abrirTicket(res.ventaId);
           }
         });
 
@@ -221,16 +221,7 @@ async confirmarAperturaCaja() {
     });
   }
 
-  abrirTicketPdf(id: number) {
-  this.miscelaneaService.descargarTicketPdf(id).subscribe({
-    next: (blob) => {
-      const url = window.URL.createObjectURL(blob);
-      window.open(url, '_blank');
-    },
-    error: (err) => {
-      console.error('Error al abrir el ticket', err);
-      this.alertService.error('No se pudo abrir el ticket PDF.');
-    }
-  });
-}
+  abrirTicket(id: number) {
+    window.open(`/ticket/${id}`, '_blank');
+  }
 }

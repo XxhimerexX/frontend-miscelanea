@@ -92,9 +92,9 @@
           </table>
         </div>
 
-        <!-- Botón para ver/descargar el Ticket en PDF (Compatible con Web y Móvil) -->
-        <button class="btn btn-dark fw-bold" (click)="verTicketPdf(ventaSeleccionada.Id)">
-          📥 Ver / Descargar Ticket PDF
+        <!-- Botón para ver e imprimir el Ticket (se abre en una pestaña nueva) -->
+        <button class="btn btn-dark fw-bold" (click)="verTicket(ventaSeleccionada.Id)">
+          🖨️ Ver / Imprimir Ticket
         </button>
 
         <!-- Botón de anulación condicional: se deshabilita si ya está anulada -->

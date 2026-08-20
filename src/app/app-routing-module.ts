@@ -10,6 +10,9 @@ import { Pages } from './pages/pages';
 const routes: Routes = [
   { path: 'auth/login', component: Login },
   { path: 'auth/register', component: Register },
+  // Fuera del layout de la app (sin sidebar/header) para que se pueda imprimir
+  // el ticket sin que salga la interfaz alrededor.
+  { path: 'ticket/:id', component: FacturaTicket, canActivate: [authGuard], data: { title: 'Factura' } },
   {
     path: '',
     component: Pages,
@@ -19,7 +22,6 @@ const routes: Routes = [
       { path: 'pos', loadChildren: () => import('./pages/pos/pos-module').then(m => m.PosModule) },
       { path: 'inventario', loadChildren: () => import('./pages/inventario/inventario-module').then(m => m.InventarioModule) },
       { path: 'ventas', loadChildren: () => import('./pages/ventas/ventas-module').then(m => m.VentasModule) },
-      { path: 'ticket/:id', component: FacturaTicket, data: { title: 'Factura' } },
       { path: 'usuarios', loadChildren: () => import('./pages/usuarios/usuarios-module').then(m => m.UsuariosModule) },
       { path: 'proveedores', loadChildren: () => import('./pages/proveedores/proveedores-module').then(m => m.ProveedoresModule) },
       { path: 'compras', loadChildren: () => import('./pages/compras/compras-module').then(m => m.ComprasModule) },

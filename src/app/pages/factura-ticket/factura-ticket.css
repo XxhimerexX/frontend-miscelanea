@@ -1,32 +1,209 @@
-.ticket-container {
-  max-width: 300px;
-  margin: 0 auto;
-  background: #fff;
-  padding: 15px;
+:host {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
   font-family: 'Courier New', Courier, monospace;
-  border: 1px solid #ddd;
+  color: #000000;
+  background-color: #e5e7eb;
+  padding: 20px;
 }
 
-.dashed-hr {
-  border-top: 1px dashed #000;
+.estado-carga,
+.estado-error {
+  margin-top: 40px;
+  font-size: 14px;
+  color: #374151;
+  text-align: center;
 }
 
-/* Regla crítica para que al imprimir solo salga el ticket y no la interfaz de Angular */
+.estado-error {
+  color: #b91c1c;
+}
+
+.no-print-bar {
+  margin-bottom: 16px;
+}
+
+.btn-imprimir {
+  background-color: #111827;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: background 0.2s ease;
+}
+
+.btn-imprimir:hover {
+  background-color: #374151;
+}
+
+.ticket {
+  width: 78mm;
+  max-width: 78mm;
+  background: #ffffff;
+  padding: 4mm 3mm;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  font-size: 11px;
+  line-height: 1.25;
+  color: #000000;
+}
+
+.center {
+  text-align: center;
+}
+
+.right {
+  text-align: right;
+}
+
+.bold {
+  font-weight: bold;
+}
+
+.logo-container {
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.logo {
+  width: 52mm;
+  max-width: 80%;
+  height: auto;
+  filter: grayscale(100%) contrast(150%);
+  display: block;
+  margin: 0 auto;
+}
+
+.company-name {
+  font-size: 13px;
+  font-weight: 900;
+  margin-top: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.subtitle {
+  font-size: 8.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-top: 1px;
+}
+
+.divider {
+  border-top: 1px dashed #000000;
+  margin: 6px 0;
+}
+
+.double-divider {
+  border-top: 2px dashed #000000;
+  margin: 6px 0;
+}
+
+.info-section {
+  font-size: 10.5px;
+  line-height: 1.35;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.items-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10.5px;
+  margin: 4px 0;
+}
+
+.items-table th {
+  border-bottom: 1px dashed #000000;
+  padding: 3px 0;
+  text-align: left;
+}
+
+.items-table td {
+  padding: 3px 0;
+  vertical-align: top;
+}
+
+.col-desc {
+  width: 32%;
+}
+
+.col-qty {
+  width: 10%;
+  text-align: center;
+}
+
+.col-price {
+  width: 18%;
+  text-align: right;
+}
+
+.col-iva {
+  width: 18%;
+  text-align: right;
+}
+
+.col-total {
+  width: 22%;
+  text-align: right;
+}
+
+.totals-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+  margin-top: 2px;
+}
+
+.totals-table td {
+  padding: 2px 0;
+}
+
+.total-highlight {
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.ticket-footer {
+  margin-top: 8px;
+  font-size: 9.5px;
+  text-align: center;
+  line-height: 1.3;
+}
+
+/* Reglas de impresión directa */
 @media print {
-  body * {
-    visibility: hidden;
+  @page {
+    margin: 0;
+    size: 80mm auto;
   }
-  .ticket-container, .ticket-container * {
-    visibility: visible;
+
+  body, :host {
+    padding: 0;
+    margin: 0;
+    background: none;
+    min-height: 0;
   }
-  .ticket-container {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    border: none;
-  }
-  .no-print {
+
+  .no-print-bar,
+  .estado-carga,
+  .estado-error {
     display: none !important;
+  }
+
+  .ticket {
+    width: 100%;
+    max-width: 100%;
+    box-shadow: none;
+    padding: 2mm 3mm;
+    margin: 0;
   }
 }

@@ -1,64 +1,132 @@
-<div class="ticket-container" *ngIf="datosFactura">
-  <!-- Encabezado del Ticket -->
-  <div class="text-center mb-3">
-    <h5 class="fw-bold mb-0">MISCELÁNEA</h5>
-    <p class="small text-muted mb-1">NIT: 123.456.789-0</p>
-    <p class="small text-muted mb-1">Cali, Colombia</p>
-    <p class="small mb-0"><strong>Factura N°:</strong> {{ datosFactura.NumeroFactura }}</p>
-    <p class="small"><strong>Fecha:</strong> {{ datosFactura.FechaVenta | date:'medium' }}</p>
+<div class="estado-carga" *ngIf="cargando">Cargando factura...</div>
+<div class="estado-error" *ngIf="!cargando && error">
+  No se pudo cargar la factura solicitada. Verifica que el número de venta sea correcto.
+</div>
+
+<!-- Barra superior de acciones (se oculta al imprimir) -->
+<div class="no-print-bar" *ngIf="datosFactura">
+  <button class="btn-imprimir" (click)="imprimirFactura()">🖨️ Imprimir Factura POS</button>
+</div>
+
+<!-- Ticket POS -->
+<div class="ticket" *ngIf="datosFactura">
+
+  <!-- Logo -->
+  <div class="logo-container">
+    <img src="assets/images/logo-tedi.png" alt="Tedi Holding Familiar" class="logo">
   </div>
 
-  <hr class="dashed-hr">
+  <!-- Encabezado de la empresa -->
+  <div class="center">
+    <div class="company-name">TEDI HOLDING FAMILIAR S.A.S.</div>
+    <div class="subtitle">Legado • Unidad • Valores • Confianza • Crecimiento</div>
+    <div class="info-section" style="margin-top: 4px;">
+      NIT: 123.456.789-0<br>
+      Régimen Simple de Tributación<br>
+      Dir: Calle Principal # 45 - 28<br>
+      Tel / WhatsApp: +57 310 000 0000<br>
+      Cali - Colombia
+    </div>
+  </div>
 
-  <!-- Listado de Productos -->
-  <table class="table table-sm table-borderless small mb-2">
+  <div class="divider"></div>
+
+  <!-- Información de la Factura -->
+  <div class="info-section">
+    <div class="info-row">
+      <span class="bold">FACTURA DE VENTA:</span>
+      <span class="bold">#{{ datosFactura.NumeroFactura }}</span>
+    </div>
+    <div class="info-row">
+      <span>Fecha: {{ datosFactura.FechaVenta | date:'dd/MM/yyyy' }}</span>
+      <span>Hora: {{ datosFactura.FechaVenta | date:'shortTime' }}</span>
+    </div>
+    <div class="info-row">
+      <span>Caja: POS-01</span>
+      <span>Cajero: {{ datosFactura.Usuario || 'Sistema' }}</span>
+    </div>
+    <div class="info-row">
+      <span>Pago: {{ datosFactura.MetodoPago || 'Efectivo' }}</span>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Datos del Cliente (por ahora genérico; se implementará la captura real más adelante) -->
+  <div class="info-section">
+    <div class="info-row">
+      <span class="bold">Cliente:</span>
+      <span>Anónimo</span>
+    </div>
+    <div class="info-row">
+      <span>Documento:</span>
+      <span>N/A</span>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Detalle de Productos -->
+  <table class="items-table">
     <thead>
-      <tr class="border-bottom">
-        <th>Cant / Desc</th>
-        <th class="text-end">Subtotal</th>
+      <tr>
+        <th class="col-desc">DESCRIPCIÓN</th>
+        <th class="col-qty">CANT</th>
+        <th class="col-price">P.UNIT</th>
+        <th class="col-iva">IVA</th>
+        <th class="col-total">TOTAL</th>
       </tr>
     </thead>
     <tbody>
       <tr *ngFor="let item of datosFactura.items">
-        <td>
-          {{ item.ProductoNombre || item.Nombre }}<br>
-          <small class="text-muted">{{ item.Cantidad }} x ${{ item.PrecioUnitario | number:'1.2-2' }}</small>
-        </td>
-        <td class="text-end align-middle">${{ item.Subtotal | number:'1.2-2' }}</td>
+        <td>{{ item.ProductoNombre || item.Nombre }}</td>
+        <td class="col-qty">{{ item.Cantidad }}</td>
+        <td class="col-price">{{ formatearPesos(item.PrecioUnitario) }}</td>
+        <td class="col-iva">{{ formatearPesos(item.IvaLinea) }}</td>
+        <td class="col-total">{{ formatearPesos(item.Subtotal) }}</td>
       </tr>
     </tbody>
   </table>
 
-  <hr class="dashed-hr">
+  <div class="divider"></div>
 
   <!-- Totales -->
-  <div class="small mb-3">
-    <div class="d-flex justify-content-between">
-      <span>Subtotal:</span>
-      <span>${{ datosFactura.Subtotal || datosFactura.Total | number:'1.2-2' }}</span>
-    </div>
-    <div class="d-flex justify-content-between">
-      <span>Impuestos:</span>
-      <span>${{ datosFactura.Impuestos || 0 | number:'1.2-2' }}</span>
-    </div>
-    <div class="d-flex justify-content-between fw-bold fs-6 mt-1">
-      <span>TOTAL A PAGAR:</span>
-      <span>${{ datosFactura.Total | number:'1.2-2' }}</span>
-    </div>
+  <table class="totals-table">
+    <tr>
+      <td>Subtotal:</td>
+      <td class="right">$ {{ formatearPesos(datosFactura.Subtotal) }}</td>
+    </tr>
+    <tr>
+      <td>Descuento:</td>
+      <td class="right">$ 0</td>
+    </tr>
+    <tr>
+      <td>IVA (incl.):</td>
+      <td class="right">$ {{ formatearPesos(datosFactura.Impuestos) }}</td>
+    </tr>
+    <tr class="total-highlight">
+      <td style="padding-top: 4px; border-top: 1px dashed #000;">TOTAL A PAGAR:</td>
+      <td class="right" style="padding-top: 4px; border-top: 1px dashed #000;">$ {{ formatearPesos(datosFactura.Total) }}</td>
+    </tr>
+    <ng-container *ngIf="datosFactura.MetodoPago === 'Efectivo'">
+      <tr>
+        <td>Efectivo Recibido:</td>
+        <td class="right">$ {{ formatearPesos(datosFactura.MontoRecibido) }}</td>
+      </tr>
+      <tr>
+        <td>Cambio:</td>
+        <td class="right">$ {{ formatearPesos(datosFactura.CambioDevuelto) }}</td>
+      </tr>
+    </ng-container>
+  </table>
+
+  <div class="double-divider"></div>
+
+  <!-- Pie de página -->
+  <div class="ticket-footer">
+    <div class="bold">¡GRACIAS POR SU COMPRA!</div>
+    <div>Garantía y devoluciones: 15 días calendario desde la fecha de compra, sujeto a las políticas de la compañía.</div>
+    <div style="margin-top: 3px;">Conserve esta factura.</div>
   </div>
 
-  <hr class="dashed-hr">
-
-  <!-- Pie de página del Ticket -->
-  <div class="text-center small text-muted">
-    <p class="mb-1">¡Gracias por su compra!</p>
-    <p class="mb-0">Conserve este tiquete para cambios o garantía.</p>
-  </div>
-
-  <!-- Botón de acción (Oculto al imprimir) -->
-  <div class="d-grid gap-2 mt-4 no-print">
-    <button class="btn btn-dark btn-sm fw-bold" (click)="imprimirFactura()">
-      🖨️ Imprimir Recibo
-    </button>
-  </div>
 </div>
