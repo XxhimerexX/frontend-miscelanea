@@ -60,7 +60,10 @@ export class Devoluciones implements OnInit {
 
   cargarProductos() {
     this.miscelaneaService.obtenerProductos().subscribe({
-      next: (data) => (this.listaProductos = data),
+      next: (data) => {
+        this.listaProductos = data;
+        this.cdr.detectChanges();
+      },
       error: (err) => console.error('Error al cargar productos', err)
     });
   }

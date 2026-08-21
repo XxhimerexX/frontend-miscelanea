@@ -69,14 +69,14 @@
     <div class="card">
       <div class="card-body">
         <h4 class="card-title">🔍 Catálogo de Productos</h4>
-        <h6 class="card-subtitle text-muted mb-3">Selecciona un producto y define cantidad y costo</h6>
+        <h6 class="card-subtitle text-muted mb-3">Selecciona un producto y define cantidad, costo, descuento y observación</h6>
 
         <div class="row g-2 align-items-end mb-3">
-          <div class="col-md-6">
+          <div class="col-md-4">
             <label class="form-label small fw-bold">Producto</label>
             <select class="form-select" [(ngModel)]="itemActual.productoId" name="productoId">
               <option [ngValue]="null" disabled>Selecciona un producto...</option>
-              <option *ngFor="let prod of listaProductos" [ngValue]="prod.Id">{{ prod.Nombre }} ({{ prod.CodigoBarras }})</option>
+              <option *ngFor="let prod of listaProductosFiltrada" [ngValue]="prod.Id">{{ prod.Nombre }} ({{ prod.CodigoBarras }})</option>
             </select>
           </div>
           <div class="col-md-2">
@@ -88,9 +88,20 @@
             <input type="number" step="0.01" class="form-control" [(ngModel)]="itemActual.costoUnitario" name="costoUnitario" min="0">
           </div>
           <div class="col-md-2">
+            <label class="form-label small fw-bold">Dcto %</label>
+            <input type="number" step="0.01" class="form-control" [(ngModel)]="itemActual.descuentoPorcentaje" name="descuentoPorcentaje" min="0" max="100">
+          </div>
+          <div class="col-md-2">
             <button class="btn btn-success w-100" (click)="agregarItemOrden()">
               <i class="mdi mdi-cart-plus"></i> Agregar
             </button>
+          </div>
+          <div class="col-12">
+            <label class="form-label small fw-bold">Observación del producto (opcional)</label>
+            <input type="text" class="form-control" [(ngModel)]="itemActual.observacion" name="observacionItem" placeholder="Ej. color específico, presentación, referencia del proveedor...">
+          </div>
+          <div class="col-12">
+            <small class="text-muted">Subtotal con descuento: <strong>${{ subtotalItemActual() | number:'1.2-2' }}</strong></small>
           </div>
         </div>
 
@@ -101,6 +112,8 @@
                 <th>Producto</th>
                 <th class="text-center">Cant.</th>
                 <th class="text-end">Costo Unit.</th>
+                <th class="text-center">Dcto %</th>
+                <th>Observación</th>
                 <th class="text-end">Subtotal</th>
                 <th></th>
               </tr>
@@ -110,13 +123,15 @@
                 <td>{{ item.productoNombre }}</td>
                 <td class="text-center">{{ item.cantidadPedida }}</td>
                 <td class="text-end">${{ item.costoUnitario | number:'1.2-2' }}</td>
-                <td class="text-end fw-bold">${{ item.cantidadPedida * item.costoUnitario | number:'1.2-2' }}</td>
+                <td class="text-center">{{ item.descuentoPorcentaje || 0 }}%</td>
+                <td><small class="text-muted">{{ item.observacion || '-' }}</small></td>
+                <td class="text-end fw-bold">${{ subtotalItem(item) | number:'1.2-2' }}</td>
                 <td class="text-center">
                   <button class="btn btn-sm btn-danger p-1" (click)="eliminarItemOrden(i)"><i class="mdi mdi-delete"></i></button>
                 </td>
               </tr>
               <tr *ngIf="nuevaOrden.items.length === 0">
-                <td colspan="5" class="text-center text-muted py-3">Aún no has agregado productos a la orden.</td>
+                <td colspan="7" class="text-center text-muted py-3">Aún no has agregado productos a la orden.</td>
               </tr>
             </tbody>
           </table>
@@ -132,10 +147,13 @@
 
         <div class="mb-3">
           <label class="form-label fw-bold">Proveedor *</label>
-          <select class="form-select" [(ngModel)]="nuevaOrden.proveedorId" name="proveedorId">
+          <select class="form-select" [(ngModel)]="nuevaOrden.proveedorId" name="proveedorId" (change)="onProveedorSeleccionado()">
             <option [ngValue]="null" disabled>Selecciona un proveedor...</option>
             <option *ngFor="let prov of listaProveedores" [ngValue]="prov.Id">{{ prov.RazonSocial }}</option>
           </select>
+          <small class="text-warning" *ngIf="proveedorSinProductosAsignados">
+            ⚠️ Este proveedor no tiene productos asignados todavía — mostrando el catálogo completo.
+          </small>
         </div>
 
         <div class="mb-3">
@@ -144,7 +162,7 @@
         </div>
 
         <div class="mb-3">
-          <label class="form-label fw-bold">Observaciones</label>
+          <label class="form-label fw-bold">Observación general de la orden</label>
           <textarea class="form-control" rows="3" [(ngModel)]="nuevaOrden.observaciones" name="observaciones"></textarea>
         </div>
 
@@ -171,7 +189,10 @@
       <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-3">
           <h4 class="card-title mb-0">📦 Orden de Compra #{{ ordenSeleccionada.Id }}</h4>
-          <button class="btn btn-sm btn-outline-secondary" (click)="volverALista()">← Volver al listado</button>
+          <div>
+            <button class="btn btn-sm btn-outline-dark me-2" (click)="descargarPdfOrden()">🖨️ Descargar PDF</button>
+            <button class="btn btn-sm btn-outline-secondary" (click)="volverALista()">← Volver al listado</button>
+          </div>
         </div>
 
         <div class="mb-3 p-3 bg-light rounded border">
@@ -188,7 +209,7 @@
               {{ ordenSeleccionada.Estado }}
             </span>
           </p>
-          <p class="mb-0" *ngIf="ordenSeleccionada.Observaciones"><strong>Observaciones:</strong> {{ ordenSeleccionada.Observaciones }}</p>
+          <p class="mb-0" *ngIf="ordenSeleccionada.Observaciones"><strong>Observación general:</strong> {{ ordenSeleccionada.Observaciones }}</p>
         </div>
 
         <h6 class="fw-bold mb-2">Productos pedidos:</h6>
@@ -200,6 +221,8 @@
                 <th class="text-center">Pedido</th>
                 <th class="text-center">Recibido</th>
                 <th class="text-end">Costo</th>
+                <th class="text-center">Dcto %</th>
+                <th>Observación</th>
                 <th class="text-end">Subtotal</th>
               </tr>
             </thead>
@@ -209,12 +232,14 @@
                 <td class="text-center">{{ item.CantidadPedida }}</td>
                 <td class="text-center" [ngClass]="{'text-success fw-bold': item.CantidadRecibida === item.CantidadPedida}">{{ item.CantidadRecibida }}</td>
                 <td class="text-end">${{ item.CostoUnitario | number:'1.2-2' }}</td>
+                <td class="text-center">{{ item.DescuentoPorcentaje || 0 }}%</td>
+                <td><small class="text-muted">{{ item.Observacion || '-' }}</small></td>
                 <td class="text-end">${{ item.Subtotal | number:'1.2-2' }}</td>
               </tr>
             </tbody>
             <tfoot>
               <tr class="table-light">
-                <td colspan="4" class="text-end fw-bold">Total:</td>
+                <td colspan="6" class="text-end fw-bold">Total:</td>
                 <td class="text-end fw-bold">${{ ordenSeleccionada.Total | number:'1.2-2' }}</td>
               </tr>
             </tfoot>

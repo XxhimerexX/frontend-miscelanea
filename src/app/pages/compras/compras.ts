@@ -21,6 +21,8 @@ export class Compras implements OnInit {
   // --- Catálogos de apoyo ---
   listaProveedores: any[] = [];
   listaProductos: any[] = [];
+  listaProductosFiltrada: any[] = [];
+  proveedorSinProductosAsignados: boolean = false;
 
   // --- Formulario de creación (carrito de compra) ---
   nuevaOrden: any = this.ordenVacia();
@@ -49,7 +51,7 @@ export class Compras implements OnInit {
   }
 
   itemVacio() {
-    return { productoId: null, cantidadPedida: 1, costoUnitario: 0 };
+    return { productoId: null, cantidadPedida: 1, costoUnitario: 0, descuentoPorcentaje: 0, observacion: '' };
   }
 
   // --- Carga de datos ---
@@ -66,15 +68,51 @@ export class Compras implements OnInit {
 
   cargarProveedores() {
     this.miscelaneaService.obtenerProveedores(true).subscribe({
-      next: (data) => (this.listaProveedores = data),
+      next: (data) => {
+        this.listaProveedores = data;
+        this.cdr.detectChanges();
+      },
       error: (err) => console.error('Error al cargar proveedores', err)
     });
   }
 
   cargarProductos() {
     this.miscelaneaService.obtenerProductos().subscribe({
-      next: (data) => (this.listaProductos = data),
+      next: (data) => {
+        this.listaProductos = data;
+        this.listaProductosFiltrada = data;
+        this.cdr.detectChanges();
+      },
       error: (err) => console.error('Error al cargar productos', err)
+    });
+  }
+
+  // Cuando cambia el proveedor seleccionado, filtra el catálogo a solo los
+  // productos que ese proveedor vende. Si el proveedor no tiene productos
+  // asignados todavía, muestra el catálogo completo (para no bloquear el flujo).
+  onProveedorSeleccionado() {
+    if (!this.nuevaOrden.proveedorId) {
+      this.listaProductosFiltrada = this.listaProductos;
+      this.proveedorSinProductosAsignados = false;
+      return;
+    }
+
+    this.miscelaneaService.obtenerProductosDeProveedor(this.nuevaOrden.proveedorId).subscribe({
+      next: (productosDelProveedor) => {
+        if (productosDelProveedor.length === 0) {
+          this.listaProductosFiltrada = this.listaProductos;
+          this.proveedorSinProductosAsignados = true;
+        } else {
+          const idsProveedor = new Set(productosDelProveedor.map((p: any) => p.Id));
+          this.listaProductosFiltrada = this.listaProductos.filter((p: any) => idsProveedor.has(p.Id));
+          this.proveedorSinProductosAsignados = false;
+        }
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Error al filtrar productos por proveedor', err);
+        this.listaProductosFiltrada = this.listaProductos;
+      }
     });
   }
 
@@ -91,6 +129,14 @@ export class Compras implements OnInit {
     this.vista = 'crear';
   }
 
+  // Subtotal en vivo del ítem que se está armando, ya con el descuento aplicado.
+  subtotalItemActual(): number {
+    const cantidad = Number(this.itemActual.cantidadPedida) || 0;
+    const costo = Number(this.itemActual.costoUnitario) || 0;
+    const descuento = Number(this.itemActual.descuentoPorcentaje) || 0;
+    return Math.round(cantidad * costo * (1 - descuento / 100) * 100) / 100;
+  }
+
   agregarItemOrden() {
     const producto = this.listaProductos.find((p) => p.Id === Number(this.itemActual.productoId));
     if (!producto) {
@@ -99,6 +145,8 @@ export class Compras implements OnInit {
     }
     const cantidad = Number(this.itemActual.cantidadPedida);
     const costo = Number(this.itemActual.costoUnitario);
+    const descuento = Number(this.itemActual.descuentoPorcentaje) || 0;
+
     if (!cantidad || cantidad <= 0) {
       this.alertService.advertencia('La cantidad pedida debe ser mayor a cero.');
       return;
@@ -107,12 +155,18 @@ export class Compras implements OnInit {
       this.alertService.advertencia('El costo unitario no puede ser negativo.');
       return;
     }
+    if (isNaN(descuento) || descuento < 0 || descuento > 100) {
+      this.alertService.advertencia('El descuento debe estar entre 0 y 100%.');
+      return;
+    }
 
     this.nuevaOrden.items.push({
       productoId: producto.Id,
       productoNombre: producto.Nombre,
       cantidadPedida: cantidad,
-      costoUnitario: costo
+      costoUnitario: costo,
+      descuentoPorcentaje: descuento,
+      observacion: (this.itemActual.observacion || '').trim()
     });
 
     this.itemActual = this.itemVacio();
@@ -122,8 +176,12 @@ export class Compras implements OnInit {
     this.nuevaOrden.items.splice(index, 1);
   }
 
+  subtotalItem(item: any): number {
+    return Math.round(item.cantidadPedida * item.costoUnitario * (1 - (item.descuentoPorcentaje || 0) / 100) * 100) / 100;
+  }
+
   totalNuevaOrden(): number {
-    return this.nuevaOrden.items.reduce((acc: number, item: any) => acc + item.cantidadPedida * item.costoUnitario, 0);
+    return this.nuevaOrden.items.reduce((acc: number, item: any) => acc + this.subtotalItem(item), 0);
   }
 
   guardarOrden() {
@@ -227,6 +285,16 @@ export class Compras implements OnInit {
         this.verDetalleOrden(this.ordenSeleccionada.Id);
       },
       error: (err) => this.alertService.error('Error al cancelar la orden: ' + (err.error?.error || err.message))
+    });
+  }
+
+  descargarPdfOrden() {
+    this.miscelaneaService.descargarOrdenCompraPdf(this.ordenSeleccionada.Id).subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        window.open(url, '_blank');
+      },
+      error: () => this.alertService.error('No se pudo generar el PDF de la orden de compra.')
     });
   }
 }

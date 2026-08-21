@@ -35,10 +35,12 @@ productoForm: any = {
 
   cargarCategorias() {
     this.miscelaneaService.obtenerCategorias().subscribe({
-      next: (data) => this.listaCategorias = data,
+      next: (data) => {
+        this.listaCategorias = data;
+        this.cdr.detectChanges();
+      },
       error: (err) => console.error('Error al cargar categorías', err)
     });
-    this.cdr.detectChanges();
   }
 
   cargarInventario() {

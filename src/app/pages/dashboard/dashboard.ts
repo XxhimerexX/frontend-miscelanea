@@ -33,6 +33,7 @@ export class Dashboard implements OnInit, AfterViewInit {
     // Usa el estado de caja COMPARTIDO en toda la app, no una copia propia
     this.miscelaneaService.cajaAbierta$.subscribe((abierta) => {
       this.cajaAbierta = abierta;
+      this.cdr.detectChanges();
     });
     this.miscelaneaService.refrescarEstadoCaja();
 

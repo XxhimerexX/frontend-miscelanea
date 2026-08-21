@@ -76,7 +76,7 @@ export class MiscelaneaService {
   }
 
   descargarTicketPdf(id: number): Observable<Blob> {
-  return this.http.get(`${this.apiUrl}/ventas/ticket/${id}`, { responseType: 'blob' });
+    return this.http.get(`${this.apiUrl}/ventas/ticket/${id}`, { responseType: 'blob' });
   }
 
   // --- CAJA ---
@@ -128,7 +128,7 @@ export class MiscelaneaService {
     return this.http.get<any>(`${this.apiUrl}/dashboard/ventas-periodo`, { params });
   }
 
-    // --- REPORTES ---
+  // --- REPORTES ---
 
   obtenerReporteVentasPeriodo(periodo: string, fechaInicio: string, fechaFin: string): Observable<any> {
     const params = { periodo, fechaInicio, fechaFin };
@@ -244,5 +244,40 @@ export class MiscelaneaService {
     return this.http.post<any>(`${this.apiUrl}/devoluciones/${id}/rechazar`, {});
   }
 
+
+  descargarOrdenCompraPdf(id: number): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/compras/${id}/pdf`, { responseType: 'blob' });
+  }
+
+  
+asociarProductosProveedor(proveedorId: number, productoIds: number[]): Observable<any> {
+  return this.http.put(`${this.apiUrl}/proveedores/${proveedorId}/productos`, { productoIds });
 }
+ 
+obtenerProductosDeProveedor(proveedorId: number): Observable<any[]> {
+  return this.http.get<any[]>(`${this.apiUrl}/proveedores/${proveedorId}/productos`);
+}
+ 
+subirDocumentoProveedor(proveedorId: number, archivo: File, tipoDocumento: string): Observable<any> {
+  const formData = new FormData();
+  formData.append('archivo', archivo);
+  formData.append('tipoDocumento', tipoDocumento);
+  return this.http.post(`${this.apiUrl}/proveedores/${proveedorId}/documentos`, formData);
+}
+ 
+listarDocumentosProveedor(proveedorId: number): Observable<any[]> {
+  return this.http.get<any[]>(`${this.apiUrl}/proveedores/${proveedorId}/documentos`);
+}
+ 
+descargarDocumentoProveedor(documentoId: number): Observable<Blob> {
+  return this.http.get(`${this.apiUrl}/proveedores/documentos/${documentoId}/descargar`, { responseType: 'blob' });
+}
+ 
+eliminarDocumentoProveedor(documentoId: number): Observable<any> {
+  return this.http.delete(`${this.apiUrl}/proveedores/documentos/${documentoId}`);
+}
+
+}
+
+
 

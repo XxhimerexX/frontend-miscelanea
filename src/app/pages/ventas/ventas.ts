@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectorRef, Component } from '@angular/core';
 import { MiscelaneaService } from '../../services/miscelanea-service';
 import { AlertService } from '../../services/alert-service';
 
@@ -12,7 +12,7 @@ export class Ventas {
   listaVentas: any[] = [];
   ventaSeleccionada: any = null;
 
-  constructor(public miscelaneaService: MiscelaneaService, private alertService: AlertService) {}
+  constructor(public miscelaneaService: MiscelaneaService, private alertService: AlertService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
     this.cargarHistorialVentas();
@@ -23,6 +23,7 @@ export class Ventas {
     this.miscelaneaService.obtenerVentas().subscribe({
       next: (data) => {
         this.listaVentas = data;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Error al cargar el historial de ventas', err);
@@ -35,6 +36,7 @@ export class Ventas {
     this.miscelaneaService.obtenerVentaPorId(id).subscribe({
       next: (data) => {
         this.ventaSeleccionada = data;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Error al obtener el detalle de la venta', err);
@@ -56,6 +58,7 @@ export class Ventas {
         this.alertService.exito('Venta anulada con éxito y stock restaurado.');
         this.cargarHistorialVentas();
         this.ventaSeleccionada = null;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         this.alertService.error('Error al anular la venta: ' + (err.error?.error || err.message));

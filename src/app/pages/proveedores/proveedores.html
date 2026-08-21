@@ -42,6 +42,21 @@
                             placeholder="Nombre de la persona de contacto">
                     </div>
 
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Productos que vende este proveedor</label>
+                        <div class="border rounded p-2" style="max-height: 220px; overflow-y: auto;">
+                            <div class="form-check" *ngFor="let prod of listaProductos">
+                                <input class="form-check-input" type="checkbox" [id]="'prod-' + prod.Id"
+                                    [checked]="productosSeleccionados.has(prod.Id)" (change)="toggleProducto(prod.Id)">
+                                <label class="form-check-label small" [for]="'prod-' + prod.Id">
+                                    {{ prod.Nombre }}
+                                </label>
+                            </div>
+                            <p class="text-muted small mb-0" *ngIf="listaProductos.length === 0">No hay productos en el inventario.</p>
+                        </div>
+                        <small class="text-muted">Se usa en Compras para filtrar el catálogo por proveedor.</small>
+                    </div>
+
                     <div class="d-grid gap-2">
                         <button type="submit" class="btn btn-primary fw-bold">
                             {{ modoEdicion ? 'Actualizar Cambios' : 'Guardar Proveedor' }}
@@ -89,6 +104,9 @@
                                     </span>
                                 </td>
                                 <td class="text-center">
+                                    <button class="btn btn-sm btn-outline-dark me-2" (click)="abrirModalDocumentos(prov)" title="Documentos">
+                                        📄 Documentos
+                                    </button>
                                     <button class="btn btn-sm btn-warning me-2 text-white"
                                         (click)="seleccionarParaEditar(prov)" title="Editar">
                                         Editar
@@ -101,6 +119,71 @@
                             </tr>
                             <tr *ngIf="listaProveedores.length === 0">
                                 <td colspan="6" class="text-center text-muted py-4">No hay proveedores registrados.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================= MODAL: DOCUMENTOS DEL PROVEEDOR ============================= -->
+<div class="modal-backdrop-custom" *ngIf="mostrarModalDocumentos" (click)="cerrarModalDocumentos()"></div>
+<div class="modal-custom" *ngIf="mostrarModalDocumentos" role="dialog" aria-modal="true">
+    <div class="modal-custom-dialog">
+        <div class="card mb-0">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h4 class="card-title mb-0">📄 Documentos de {{ proveedorDocumentos?.RazonSocial }}</h4>
+                        <h6 class="card-subtitle text-muted">RUT, Cámara de Comercio, lista de precios y otros</h6>
+                    </div>
+                    <button type="button" class="btn-close" aria-label="Cerrar" (click)="cerrarModalDocumentos()"></button>
+                </div>
+
+                <div class="row g-2 align-items-end mb-3 p-2 bg-light rounded border">
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold">Tipo de documento</label>
+                        <select class="form-select form-select-sm" [(ngModel)]="tipoDocumentoSeleccionado" name="tipoDocumento">
+                            <option *ngFor="let tipo of tiposDocumento" [value]="tipo.valor">{{ tipo.etiqueta }}</option>
+                        </select>
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label small fw-bold">Archivo (PDF, XLS, XLSX — máx. 10 MB)</label>
+                        <input type="file" class="form-control form-control-sm" accept=".pdf,.xls,.xlsx" (change)="onArchivoSeleccionado($event)">
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-success btn-sm w-100" (click)="subirDocumento()">
+                            ⬆️ Subir
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                    <table class="table table-sm table-hover">
+                        <thead>
+                            <tr>
+                                <th>Tipo</th>
+                                <th>Archivo</th>
+                                <th>Subido por</th>
+                                <th>Fecha</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let doc of listaDocumentos">
+                                <td><span class="badge bg-secondary">{{ etiquetaTipoDocumento(doc.TipoDocumento) }}</span></td>
+                                <td><small>{{ doc.NombreOriginal }}</small></td>
+                                <td><small>{{ doc.UsuarioNombre }}</small></td>
+                                <td><small>{{ doc.FechaCarga | date:'short' }}</small></td>
+                                <td class="text-center">
+                                    <button class="btn btn-sm btn-outline-primary me-1" (click)="descargarDocumento(doc)" title="Descargar">⬇️</button>
+                                    <button class="btn btn-sm btn-outline-danger" (click)="eliminarDocumento(doc)" title="Eliminar">🗑️</button>
+                                </td>
+                            </tr>
+                            <tr *ngIf="listaDocumentos.length === 0">
+                                <td colspan="5" class="text-center text-muted py-3">Este proveedor no tiene documentos cargados.</td>
                             </tr>
                         </tbody>
                     </table>

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectorRef, Component } from '@angular/core';
 import { AuthService } from '../../../services/auht-services';
 import { Router } from '@angular/router';
 
@@ -14,7 +14,7 @@ export class Login {
   cargando: boolean = false;
   errorMensaje: string = '';
 
-  constructor(private authService: AuthService, private router: Router) {}
+  constructor(private authService: AuthService, private router: Router, private cdr: ChangeDetectorRef) {}
 
   iniciarSesion() {
     if (!this.correo || !this.contrasena) {
@@ -33,6 +33,7 @@ export class Login {
       error: (err) => {
         this.cargando = false;
         this.errorMensaje = err.error?.error || 'Error al iniciar sesión.';
+        this.cdr.detectChanges();
       }
     });
   }

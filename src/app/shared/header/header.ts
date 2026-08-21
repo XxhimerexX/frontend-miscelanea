@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { AuthService } from '../../services/auht-services';
 import { AlertService } from '../../services/alert-service';
 import { MiscelaneaService } from '../../services/miscelanea-service';
@@ -15,11 +15,15 @@ export class Header implements OnInit {
   constructor(
     public authService: AuthService,
     private alertService: AlertService,
-    private miscelaneaService: MiscelaneaService
+    private miscelaneaService: MiscelaneaService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
-    this.miscelaneaService.cajaAbierta$.subscribe((abierta) => this.cajaAbierta = abierta);
+    this.miscelaneaService.cajaAbierta$.subscribe((abierta) => {
+      this.cajaAbierta = abierta;
+      this.cdr.detectChanges();
+    });
   }
 
   // Bloquea el logout si la caja sigue abierta (misma regla que el sidebar)

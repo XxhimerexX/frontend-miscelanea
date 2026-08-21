@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectorRef, Component } from '@angular/core';
 import { AuthService } from '../../services/auht-services';
 import { AlertService } from '../../services/alert-service';
 
@@ -22,7 +22,7 @@ export class Usuarios {
     activo: true
   };
 
-  constructor(public authService: AuthService, private alertService: AlertService) {}
+  constructor(public authService: AuthService, private alertService: AlertService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
     this.cargarUsuarios();
@@ -31,14 +31,20 @@ export class Usuarios {
 
   cargarUsuarios() {
     this.authService.listarUsuarios().subscribe({
-      next: (data) => this.listaUsuarios = data,
+      next: (data) => {
+        this.listaUsuarios = data;
+        this.cdr.detectChanges();
+      },
       error: (err) => console.error('Error al cargar usuarios', err)
     });
   }
 
   cargarRoles() {
     this.authService.listarRoles().subscribe({
-      next: (data) => this.listaRoles = data,
+      next: (data) => {
+        this.listaRoles = data;
+        this.cdr.detectChanges();
+      },
       error: (err) => console.error('Error al cargar roles', err)
     });
   }

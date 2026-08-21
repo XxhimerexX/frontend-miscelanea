@@ -34,8 +34,14 @@ export class Sidebar implements AfterViewInit {
   ) {}
 
   ngOnInit(): void {
-    this.miscelaneaService.cajaAbierta$.subscribe((abierta) => this.cajaAbierta = abierta);
-    this.miscelaneaService.turnoActual$.subscribe((turno) => this.turnoActual = turno);
+    this.miscelaneaService.cajaAbierta$.subscribe((abierta) => {
+      this.cajaAbierta = abierta;
+      this.cdr.detectChanges();
+    });
+    this.miscelaneaService.turnoActual$.subscribe((turno) => {
+      this.turnoActual = turno;
+      this.cdr.detectChanges();
+    });
     this.miscelaneaService.refrescarEstadoCaja();
     this.construirMenu();
   }
@@ -124,10 +130,12 @@ export class Sidebar implements AfterViewInit {
         this.mostrarPanelCierre = false;
         this.alertService.exito(`Caja cerrada correctamente. Diferencia: $${diferencia.toLocaleString()}`);
         this.miscelaneaService.refrescarEstadoCaja();
+        this.cdr.detectChanges();
       },
       error: (err) => {
         this.cerrandoCaja = false;
         this.alertService.error('Error al cerrar la caja: ' + (err.error?.error || err.message));
+        this.cdr.detectChanges();
       }
     });
   }
