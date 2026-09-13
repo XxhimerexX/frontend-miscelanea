@@ -1,6 +1,7 @@
-import { AfterViewInit, Component } from '@angular/core';
-
-declare var window: any;
+import { Component, OnInit } from '@angular/core';
+import { LayoutService } from '../services/layout-service';
+import { BrandingService } from '../services/branding-service';
+import { EmpresaService } from '../services/empresa-service';
 
 @Component({
   selector: 'app-pages',
@@ -8,13 +9,17 @@ declare var window: any;
   templateUrl: './pages.html',
   styleUrl: './pages.css',
 })
-export class Pages implements AfterViewInit {
-  // El toggle de "minimizar sidebar", tooltips, popovers, etc. se inicializan
-  // en custom.js dentro de un $(document).ready() que corre al cargar el
-  // index.html inicial, antes de que exista este layout (solo se crea tras
-  // el login). Por eso se reinvoca aquí, cuando header y sidebar ya están
-  // en el DOM. customInitFunction() es seguro de llamar más de una vez.
-  ngAfterViewInit(): void {
-    window.customInitFunction();
+export class Pages implements OnInit {
+  constructor(
+    public layout: LayoutService,
+    private branding: BrandingService,
+    private empresaService: EmpresaService
+  ) {}
+
+  ngOnInit(): void {
+    this.branding.aplicar();
+    // Si el administrador cambia el nombre/logo de la empresa mientras está
+    // adentro (pestaña "Mi empresa"), se refleja sin tener que recargar.
+    this.empresaService.brandingActualizada$.subscribe(() => this.branding.aplicar());
   }
 }

@@ -1,19 +1,47 @@
-<div class="card">
+<!-- Pestañas -->
+<ul class="nav nav-tabs mb-3">
+    <li class="nav-item">
+        <button class="nav-link" [class.active]="tab === 'productos'" (click)="tab = 'productos'">
+            <i class="mdi mdi-package-variant-closed"></i> Productos
+        </button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link" [class.active]="tab === 'categorias'" (click)="tab = 'categorias'">
+            <i class="mdi mdi-shape-outline"></i> Categorías
+        </button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link" [class.active]="tab === 'descuentos'" (click)="tab = 'descuentos'">
+            <i class="mdi mdi-sale"></i> Descuentos / Ofertas
+        </button>
+    </li>
+</ul>
+
+<div class="card" *ngIf="tab === 'productos'">
     <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
             <div>
                 <h4 class="card-title mb-0">📦 Inventario de Productos</h4>
                 <h6 class="card-subtitle text-muted">Listado sincronizado con la base de datos</h6>
             </div>
-            <button class="btn btn-primary fw-bold" (click)="abrirModalNuevo()">
-                + Nuevo Producto
-            </button>
+            <div class="d-flex gap-2 flex-wrap">
+                <button class="btn btn-outline-success" (click)="descargarInventarioExcel()" [disabled]="descargandoExcel" title="Descargar Excel">
+                    <i class="mdi mdi-file-excel"></i> {{ descargandoExcel ? 'Generando...' : 'Excel' }}
+                </button>
+                <button class="btn btn-outline-primary" (click)="enviarInventarioExcel()" [disabled]="enviandoExcel" title="Enviar por correo">
+                    <i class="mdi mdi-email-outline"></i> {{ enviandoExcel ? 'Enviando...' : 'Enviar por correo' }}
+                </button>
+                <button class="btn btn-primary fw-bold" (click)="abrirModalNuevo()">
+                    + Nuevo Producto
+                </button>
+            </div>
         </div>
 
         <div class="table-responsive" style="max-height: 650px; overflow-y: auto;">
             <table class="table table-hover align-middle">
                 <thead class="table-light">
                     <tr>
+                        <th style="width: 56px;"></th>
                         <th>Código</th>
                         <th>Nombre</th>
                         <th>Costo sin IVA</th>
@@ -27,6 +55,16 @@
                 </thead>
                 <tbody>
                     <tr *ngFor="let prod of listaProductos">
+                        <td>
+                            <img
+                                *ngIf="prod.TieneImagen"
+                                [src]="urlImagen(prod)"
+                                alt="{{ prod.Nombre }}"
+                                class="inv-thumb" />
+                            <span *ngIf="!prod.TieneImagen" class="inv-thumb inv-thumb--vacio">
+                                <i class="mdi mdi-image-off-outline"></i>
+                            </span>
+                        </td>
                         <td>
                             <span class="badge bg-secondary">{{ prod.CodigoBarras || 'N/A' }}</span>
                         </td>
@@ -43,24 +81,217 @@
                                 {{ prod.Stock }} un.
                             </span>
                         </td>
-                        <td>{{ prod.CategoriaId }}</td>
-                        <td class="text-center">
-                            <button class="btn btn-sm btn-warning me-2 text-white"
+                        <td>{{ prod.Categoria || prod.CategoriaId }}</td>
+                        <td class="text-center acciones-tabla">
+                            <button class="btn btn-sm btn-outline-primary btn-icon"
                                 (click)="abrirModalEditar(prod)" title="Editar">
-                                Editar
+                                <i class="mdi mdi-pencil"></i>
                             </button>
-                            <button class="btn btn-sm btn-danger" (click)="eliminarProducto(prod.Id)"
+                            <button class="btn btn-sm btn-outline-danger btn-icon" (click)="eliminarProducto(prod.Id)"
                                 title="Eliminar">
-                                Eliminar
+                                <i class="mdi mdi-delete"></i>
                             </button>
                         </td>
                     </tr>
                     <tr *ngIf="listaProductos.length === 0">
-                        <td colspan="9" class="text-center text-muted py-4">No hay productos registrados en el
+                        <td colspan="10" class="text-center text-muted py-4">No hay productos registrados en el
                             inventario.</td>
                     </tr>
                 </tbody>
             </table>
+        </div>
+    </div>
+</div>
+
+<!-- ========================= TAB CATEGORÍAS ========================= -->
+<div class="row" *ngIf="tab === 'categorias'">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">🏷️ Categorías de productos</h4>
+                <p class="text-muted small">Se usan al crear productos y como pestañas en el POS.</p>
+
+                <div class="input-group mb-3" style="max-width: 400px;">
+                    <input type="text" class="form-control" placeholder="Nombre de la nueva categoría"
+                        [(ngModel)]="nuevaCategoriaNombre" (keyup.enter)="crearCategoria()">
+                    <button class="btn btn-primary" (click)="crearCategoria()" [disabled]="guardandoCategoria">Añadir</button>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Productos</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let cat of listaCategorias">
+                                <td class="fw-semibold">{{ cat.Nombre }}</td>
+                                <td>{{ cat.Productos ?? 0 }}</td>
+                                <td class="text-center acciones-tabla">
+                                    <button class="btn btn-sm btn-outline-primary btn-icon" (click)="renombrarCategoria(cat)" title="Renombrar">
+                                        <i class="mdi mdi-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger btn-icon" [disabled]="(cat.Productos ?? 0) > 0"
+                                        [title]="(cat.Productos ?? 0) > 0 ? 'Tiene productos; muévelos primero' : 'Eliminar'"
+                                        (click)="eliminarCategoria(cat)">
+                                        <i class="mdi mdi-delete"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr *ngIf="listaCategorias.length === 0">
+                                <td colspan="3" class="text-center text-muted py-3">No hay categorías.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ======================= TAB DESCUENTOS / OFERTAS ======================= -->
+<div class="card" *ngIf="tab === 'descuentos'">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h4 class="card-title mb-0">🏷️ Descuentos / Ofertas del día</h4>
+                <h6 class="card-subtitle text-muted">Se aplican solos en el POS mientras estén vigentes</h6>
+            </div>
+            <button class="btn btn-primary fw-bold" (click)="abrirModalDescuentoNuevo()">
+                <i class="mdi mdi-plus"></i> Nueva oferta
+            </button>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Aplica a</th>
+                        <th>Descuento</th>
+                        <th>Vigencia</th>
+                        <th>Estado</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let d of listaDescuentos">
+                        <td class="fw-semibold">{{ d.Nombre }}</td>
+                        <td>
+                            <span class="badge bg-secondary" *ngIf="d.ProductoNombre">{{ d.ProductoNombre }}</span>
+                            <span class="badge bg-info text-dark" *ngIf="d.CategoriaNombre">Categoría: {{ d.CategoriaNombre }}</span>
+                        </td>
+                        <td>{{ descripcionValorDescuento(d) }}
+                            <small class="text-muted d-block">{{ etiquetaTipoDescuento(d.TipoDescuento) }}</small>
+                        </td>
+                        <td class="small">{{ d.FechaInicio | date:'dd/MM/yy' }} → {{ d.FechaFin | date:'dd/MM/yy' }}</td>
+                        <td>
+                            <span [ngClass]="d.Activa ? 'badge text-bg-success' : 'badge text-bg-secondary'">
+                                {{ d.Activa ? 'Activa' : 'Inactiva' }}
+                            </span>
+                        </td>
+                        <td class="text-center acciones-tabla">
+                            <button class="btn btn-sm btn-outline-primary btn-icon" (click)="editarDescuento(d)" title="Editar">
+                                <i class="mdi mdi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger btn-icon" (click)="eliminarDescuento(d)" title="Eliminar">
+                                <i class="mdi mdi-delete"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    <tr *ngIf="listaDescuentos.length === 0">
+                        <td colspan="6" class="text-center text-muted py-4">No hay ofertas creadas.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== MODAL: CREAR / EDITAR OFERTA ===================== -->
+<div class="modal-backdrop-custom" *ngIf="mostrarModalDescuento" (click)="cerrarModalDescuento()"></div>
+<div class="modal-custom" *ngIf="mostrarModalDescuento" role="dialog" aria-modal="true">
+    <div class="modal-custom-dialog" style="max-width: 520px;">
+        <div class="card mb-0">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <h4 class="card-title mb-0">{{ modoEdicionDescuento ? '✏️ Editar oferta' : '➕ Nueva oferta' }}</h4>
+                    <button type="button" class="btn-close" aria-label="Cerrar" (click)="cerrarModalDescuento()"></button>
+                </div>
+
+                <form (ngSubmit)="guardarDescuento()">
+                    <div class="mb-3">
+                        <label class="form-label">Nombre de la oferta *</label>
+                        <input type="text" class="form-control" [(ngModel)]="descuentoForm.Nombre" name="Nombre"
+                            placeholder="Ej. Oferta del día - Gaseosas" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label d-block">Aplica a *</label>
+                        <div class="btn-group" role="group">
+                            <input type="radio" class="btn-check" name="aplicaA" id="aplicaProducto" value="producto"
+                                [(ngModel)]="descuentoForm.aplicaA">
+                            <label class="btn btn-outline-primary btn-sm" for="aplicaProducto">Un producto</label>
+                            <input type="radio" class="btn-check" name="aplicaA" id="aplicaCategoria" value="categoria"
+                                [(ngModel)]="descuentoForm.aplicaA">
+                            <label class="btn btn-outline-primary btn-sm" for="aplicaCategoria">Una categoría</label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3" *ngIf="descuentoForm.aplicaA === 'producto'">
+                        <label class="form-label">Producto *</label>
+                        <select class="form-select" [(ngModel)]="descuentoForm.ProductoId" name="ProductoId">
+                            <option [ngValue]="null" disabled>Selecciona...</option>
+                            <option *ngFor="let p of listaProductos" [ngValue]="p.Id">{{ p.Nombre }}</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3" *ngIf="descuentoForm.aplicaA === 'categoria'">
+                        <label class="form-label">Categoría *</label>
+                        <select class="form-select" [(ngModel)]="descuentoForm.CategoriaId" name="CategoriaId">
+                            <option [ngValue]="null" disabled>Selecciona...</option>
+                            <option *ngFor="let c of listaCategorias" [ngValue]="c.Id">{{ c.Nombre }}</option>
+                        </select>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Tipo *</label>
+                            <select class="form-select" [(ngModel)]="descuentoForm.TipoDescuento" name="TipoDescuento">
+                                <option *ngFor="let t of tiposDescuento" [value]="t.valor">{{ t.etiqueta }}</option>
+                            </select>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Valor *</label>
+                            <input type="number" step="0.01" min="0" class="form-control"
+                                [(ngModel)]="descuentoForm.ValorDescuento" name="ValorDescuento">
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Desde *</label>
+                            <input type="date" class="form-control" [(ngModel)]="descuentoForm.FechaInicio" name="FechaInicio">
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Hasta *</label>
+                            <input type="date" class="form-control" [(ngModel)]="descuentoForm.FechaFin" name="FechaFin">
+                        </div>
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="descActiva" [(ngModel)]="descuentoForm.Activa" name="Activa">
+                        <label class="form-check-label" for="descActiva">Activa</label>
+                    </div>
+
+                    <div class="d-flex gap-2 justify-content-end">
+                        <button type="button" class="btn btn-secondary" (click)="cerrarModalDescuento()">Cancelar</button>
+                        <button type="submit" class="btn btn-primary fw-bold" [disabled]="guardandoDescuento">
+                            {{ guardandoDescuento ? 'Guardando...' : (modoEdicionDescuento ? 'Guardar cambios' : 'Crear oferta') }}
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>
@@ -140,7 +371,7 @@
                         <!-- Categoría -->
                         <div class="col-md-4 mb-3">
                             <label class="form-label">Categoría *</label>
-                            <select class="custom-select w-100" id="inlineFormCustomSelect" [(ngModel)]="productoForm.CategoriaId" name="CategoriaId" required>
+                            <select class="form-select w-100" id="inlineFormCustomSelect" [(ngModel)]="productoForm.CategoriaId" name="CategoriaId" required>
                                 <option [ngValue]="null" disabled>Selecciona...</option>
                                 <option *ngFor="let cat of listaCategorias" [value]="cat.Id">
                                     {{ cat.Nombre }}
@@ -149,13 +380,41 @@
                         </div>
                     </div>
 
+                    <!-- Imagen del producto -->
+                    <div class="mb-3">
+                        <label class="form-label">Imagen del producto</label>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="inv-preview">
+                                <img *ngIf="imagenPreview" [src]="imagenPreview" alt="Vista previa" />
+                                <span *ngIf="!imagenPreview" class="text-muted"><i class="mdi mdi-image-plus"></i></span>
+                            </div>
+                            <div class="flex-grow-1">
+                                <input
+                                    type="file"
+                                    class="form-control"
+                                    accept="image/png,image/jpeg,image/webp"
+                                    (change)="onImagenSeleccionada($event)" />
+                                <div class="d-flex justify-content-between align-items-center mt-1">
+                                    <small class="text-muted">Se reescala a 500px y se guarda en la base de datos.</small>
+                                    <button
+                                        *ngIf="imagenPreview"
+                                        type="button"
+                                        class="btn btn-sm btn-link text-danger p-0"
+                                        (click)="quitarImagen()">
+                                        Quitar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Botones de Acción -->
                     <div class="d-flex gap-2 justify-content-end">
                         <button type="button" class="btn btn-secondary" (click)="cerrarModal()">
                             Cancelar
                         </button>
-                        <button type="submit" class="btn btn-primary fw-bold">
-                            {{ modoEdicion ? 'Actualizar Cambios' : 'Guardar Producto' }}
+                        <button type="submit" class="btn btn-primary fw-bold" [disabled]="subiendoImagen">
+                            {{ subiendoImagen ? 'Guardando imagen...' : (modoEdicion ? 'Actualizar Cambios' : 'Guardar Producto') }}
                         </button>
                     </div>
                 </form>

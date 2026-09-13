@@ -1,81 +1,129 @@
-        <!-- ============================================================== -->
-        <!-- Topbar header - style you can find in pages.scss -->
-        <!-- ============================================================== -->
-        <header class="topbar">
-            <nav class="navbar top-navbar navbar-expand-md navbar-light">
-                <!-- ============================================================== -->
-                <!-- Logo -->
-                <!-- ============================================================== -->
-                <div class="navbar-header">
-                    <a class="navbar-brand" href="index.html">
-                        <!-- Logo icon --><b>
-                            <!--You can put here icon as well // <i class="wi wi-sunset"></i> //-->
-                            <!-- Dark Logo icon -->
-                            <img src="../assets/images/logo-icon.png" alt="homepage" class="dark-logo" />
-                            <!-- Light Logo icon -->
-                            <img src="../assets/images/logo-light-icon.png" alt="homepage" class="light-logo" />
-                        </b>
-                        <!--End Logo icon -->
-                        <!-- Logo text --><span>
-                         <!-- dark Logo text -->
-                         <img src="../assets/images/logo-text.png" alt="homepage" class="dark-logo" />
-                         <!-- Light Logo text -->    
-                         <img src="../assets/images/logo-light-text.png" class="light-logo" alt="homepage" /></span> </a>
-                </div>
-                <!-- ============================================================== -->
-                <!-- End Logo -->
-                <!-- ============================================================== -->
-                <div class="navbar-collapse">
-                    <!-- ============================================================== -->
-                    <!-- toggle and nav items -->
-                    <!-- ============================================================== -->
-                    <ul class="navbar-nav mr-auto">
-                        <!-- This is  -->
-                        <li class="nav-item"> <a class="nav-link nav-toggler hidden-md-up waves-effect waves-dark" href="javascript:void(0)"><i class="ti-menu"></i></a> </li>
-                        <li class="nav-item"> <a class="nav-link sidebartoggler hidden-sm-down waves-effect waves-dark" href="javascript:void(0)"><i class="ti-menu"></i></a> </li>
-                        
-                    </ul>
-                    <!-- ============================================================== -->
-                    <!-- User profile and search -->
-                    <!-- ============================================================== -->
-                    <ul class="navbar-nav my-lg-0">
-                        <!-- ============================================================== -->
-                        <!-- Language -->
-                        <!-- ============================================================== -->
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle waves-effect waves-dark" href="" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> <i class="flag-icon flag-icon-us"></i></a>
-                            <div class="dropdown-menu dropdown-menu-right animated bounceInDown"> <a class="dropdown-item" href="#"><i class="flag-icon flag-icon-in"></i> India</a> <a class="dropdown-item" href="#"><i class="flag-icon flag-icon-fr"></i> French</a> <a class="dropdown-item" href="#"><i class="flag-icon flag-icon-cn"></i> China</a> <a class="dropdown-item" href="#"><i class="flag-icon flag-icon-de"></i> Dutch</a> </div>
-                        </li>
-                        <!-- ============================================================== -->
-                        <!-- Profile -->
-                        <!-- ============================================================== -->
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle waves-effect waves-dark" href="" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><img src="../assets/images/users/1.jpg" alt="user" class="profile-pic" /></a>
-                            <div class="dropdown-menu dropdown-menu-right animated flipInY">
-                                <ul class="dropdown-user">
-                                    <li>
-                                        <div class="dw-user-box">
-                                            <div class="u-img"><img src="../assets/images/users/1.jpg" alt="user"></div>
-                                            <div class="u-text">
-                                                <h4>{{ authService.obtenerUsuario()?.nombre || 'Usuario' }}</h4>
-                                                <p class="text-muted">{{ authService.obtenerUsuario()?.correo }}</p></div>
-                                        </div>
-                                    </li>
-                                    <li role="separator" class="divider"></li>
-                                    <li><a href="#"><i class="ti-user"></i> My Profile</a></li>
-                                    <li><a href="#"><i class="ti-wallet"></i> My Balance</a></li>
-                                    <li><a href="#"><i class="ti-email"></i> Inbox</a></li>
-                                    <li role="separator" class="divider"></li>
-                                    <li><a href="#"><i class="ti-settings"></i> Account Setting</a></li>
-                                    <li role="separator" class="divider"></li>
-                                    <li><a href="javascript:void(0)" (click)="cerrarSesion()"><i class="fa fa-power-off"></i> Logout</a></li>
-                                </ul>
-                            </div>
-                        </li>
-                    </ul>
-                </div>
-            </nav>
-        </header>
-        <!-- ============================================================== -->
-        <!-- End Topbar header -->
-        <!-- ============================================================== -->
+<header class="app-header">
+  <!-- Toggle sidebar: minimiza en desktop, abre/cierra en móvil -->
+  <button
+    type="button"
+    class="app-icon-btn d-none d-lg-inline-flex"
+    title="Minimizar menú"
+    (click)="layout.alternarColapsada()">
+    <i class="mdi mdi-menu"></i>
+  </button>
+  <button
+    type="button"
+    class="app-icon-btn d-lg-none"
+    title="Menú"
+    (click)="layout.alternarMovil()">
+    <i class="mdi mdi-menu"></i>
+  </button>
+
+  <div class="app-header__spacer"></div>
+
+  <!-- Selector de empresa -->
+  <div class="dropdown" *ngIf="mostrarSelectorEmpresa">
+    <button
+      type="button"
+      class="app-icon-btn d-inline-flex align-items-center gap-1 px-2"
+      style="width: auto;"
+      data-bs-toggle="dropdown"
+      data-bs-display="static"
+      aria-expanded="false"
+      title="Cambiar de empresa">
+      <i class="mdi mdi-domain"></i>
+      <span class="small fw-semibold d-none d-md-inline text-truncate" style="max-width: 160px;">{{ nombreEmpresaActual }}</span>
+    </button>
+    <div class="dropdown-menu dropdown-menu-end">
+      <div class="small fw-semibold text-muted px-3 pb-1">Cambiar de empresa</div>
+      <button
+        *ngFor="let e of misEmpresasLista"
+        class="dropdown-item d-flex align-items-center gap-2"
+        [class.active]="esEmpresaActual(e.id)"
+        (click)="cambiarAEmpresa(e.id)">
+        <i class="mdi mdi-domain"></i> {{ e.nombre }}
+      </button>
+      <ng-container *ngIf="authService.esSuperAdmin()">
+        <hr class="dropdown-divider" />
+        <button class="dropdown-item d-flex align-items-center gap-2" (click)="cambiarAModoSuperAdmin()">
+          <i class="mdi mdi-shield-crown"></i> Modo superadministrador
+        </button>
+      </ng-container>
+    </div>
+  </div>
+
+  <!-- Estado de caja -->
+  <span
+    class="badge d-none d-sm-inline-flex align-items-center gap-1"
+    [ngClass]="cajaAbierta ? 'text-bg-success' : 'text-bg-secondary'">
+    <i class="mdi" [ngClass]="cajaAbierta ? 'mdi-lock-open-variant' : 'mdi-lock'"></i>
+    Caja {{ cajaAbierta ? 'abierta' : 'cerrada' }}
+  </span>
+
+  <!-- Selector de tema: modo claro/oscuro + color de acento -->
+  <div class="dropdown">
+    <button
+      type="button"
+      class="app-icon-btn"
+      data-bs-toggle="dropdown"
+      data-bs-auto-close="outside"
+      aria-expanded="false"
+      title="Personalizar tema">
+      <i class="mdi mdi-palette-outline"></i>
+    </button>
+    <div class="dropdown-menu dropdown-menu-end theme-menu">
+      <div class="small fw-semibold text-muted px-2 pb-1">Modo</div>
+      <div class="d-flex gap-2 px-2 pb-2">
+        <button
+          type="button"
+          class="btn btn-sm flex-fill"
+          [ngClass]="theme.modo() === 'light' ? 'btn-primary' : 'btn-outline-secondary'"
+          (click)="theme.establecerModo('light')">
+          <i class="mdi mdi-weather-sunny"></i> Claro
+        </button>
+        <button
+          type="button"
+          class="btn btn-sm flex-fill"
+          [ngClass]="theme.modo() === 'dark' ? 'btn-primary' : 'btn-outline-secondary'"
+          (click)="theme.establecerModo('dark')">
+          <i class="mdi mdi-weather-night"></i> Oscuro
+        </button>
+      </div>
+
+      <hr class="dropdown-divider" />
+
+      <div class="small fw-semibold text-muted px-2 pb-1">Color de acento</div>
+      <div class="theme-swatches px-2 pb-1">
+        <button
+          *ngFor="let a of theme.acentos"
+          type="button"
+          class="theme-swatch"
+          [class.is-active]="theme.acento() === a.id"
+          [style.background]="a.muestra"
+          [title]="a.nombre"
+          (click)="theme.establecerAcento(a.id)">
+          <i class="mdi mdi-check" *ngIf="theme.acento() === a.id"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Menú de usuario -->
+  <div class="dropdown">
+    <button
+      type="button"
+      class="app-icon-btn"
+      data-bs-toggle="dropdown"
+      data-bs-display="static"
+      aria-expanded="false"
+      title="Cuenta">
+      <i class="mdi mdi-account-circle"></i>
+    </button>
+    <div class="dropdown-menu dropdown-menu-end">
+      <div class="px-3 py-2">
+        <div class="fw-semibold text-truncate">{{ authService.obtenerUsuario()?.nombre || 'Usuario' }}</div>
+        <div class="small text-muted text-truncate">{{ authService.obtenerUsuario()?.correo }}</div>
+      </div>
+      <hr class="dropdown-divider" />
+      <button class="dropdown-item d-flex align-items-center gap-2" (click)="cerrarSesion()">
+        <i class="mdi mdi-power"></i> Cerrar sesión
+      </button>
+    </div>
+  </div>
+</header>

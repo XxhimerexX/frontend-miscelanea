@@ -4,7 +4,7 @@ import { MiscelaneaService } from '../../services/miscelanea-service';
 
 Chart.register(...registerables);
 
-type TabReporte = 'periodo' | 'productos' | 'margenes' | 'kardex' | 'stock';
+type TabReporte = 'periodo' | 'productos' | 'margenes' | 'kardex' | 'stock' | 'admin';
 
 @Component({
   selector: 'app-reportes',
@@ -43,6 +43,13 @@ export class Reportes implements OnInit {
   datosBajaRotacion: any[] = [];
   diasBajaRotacion: number = 30;
 
+  // --- Administración (reportes genéricos) ---
+  reportesAdmin: any[] = [];
+  reporteAdminSel: string = 'ventas-cajero';
+  reporteAdminData: { titulo: string; columnas: any[]; filas: any[] } = { titulo: '', columnas: [], filas: [] };
+  cargandoAdmin: boolean = false;
+  descargandoAdmin: boolean = false;
+
   constructor(private miscelaneaService: MiscelaneaService, private cdr: ChangeDetectorRef) {
     const hoy = new Date();
     const hace30Dias = new Date();
@@ -74,7 +81,51 @@ export class Reportes implements OnInit {
     else if (tab === 'stock') {
       this.cargarStockBajo();
       this.cargarBajaRotacion();
+    } else if (tab === 'admin') {
+      if (!this.reportesAdmin.length) {
+        this.miscelaneaService.listarReportesAdmin().subscribe({
+          next: (d) => { this.reportesAdmin = d || []; this.cdr.detectChanges(); },
+        });
+      }
+      this.cargarReporteAdmin();
     }
+  }
+
+  // --- Reportes de administración ---
+  private paramsAdmin(): Record<string, string> {
+    return { fechaInicio: this.fechaInicio, fechaFin: this.fechaFin, periodo: this.filtroPeriodo };
+  }
+
+  cargarReporteAdmin(): void {
+    this.cargandoAdmin = true;
+    this.miscelaneaService.obtenerReporteAdmin(this.reporteAdminSel, this.paramsAdmin()).subscribe({
+      next: (d) => {
+        this.reporteAdminData = d;
+        this.cargandoAdmin = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.reporteAdminData = { titulo: '', columnas: [], filas: [] };
+        this.cargandoAdmin = false;
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  descargarReporteAdminExcel(): void {
+    this.descargandoAdmin = true;
+    this.miscelaneaService.descargarReporteAdminExcel(this.reporteAdminSel, this.paramsAdmin()).subscribe({
+      next: (blob) => {
+        this.descargandoAdmin = false;
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${this.reporteAdminSel}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+      },
+      error: () => { this.descargandoAdmin = false; },
+    });
   }
 
   // --- Atajos de fecha ---
@@ -108,6 +159,7 @@ export class Reportes implements OnInit {
     else if (this.tabActiva === 'productos') this.cargarVentasProductos();
     else if (this.tabActiva === 'margenes') this.cargarMargenes();
     else if (this.tabActiva === 'kardex' && this.productoKardexId) this.cargarKardex();
+    else if (this.tabActiva === 'admin') this.cargarReporteAdmin();
   }
 
   // --- Ventas por período ---

@@ -1,0 +1,117 @@
+<div class="row">
+    <!-- Columna Izquierda: Formulario -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">
+                    {{ modoEdicion ? '✏️ Actualizar Cliente' : '➕ Registrar Nuevo Cliente' }}
+                </h4>
+                <h6 class="card-subtitle text-muted mb-3">Datos del cliente</h6>
+
+                <form (ngSubmit)="guardarCliente()">
+                    <div class="mb-3">
+                        <label class="form-label">Tipo de Cliente *</label>
+                        <select class="form-select" [(ngModel)]="clienteForm.TipoCliente" name="TipoCliente">
+                            <option value="DETAL">Detal</option>
+                            <option value="MAYORISTA">Mayorista</option>
+                        </select>
+                        <small class="text-muted">Los clientes mayoristas reciben el precio mayorista donde el producto lo tenga definido.</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Razón Social / Nombre *</label>
+                        <input type="text" class="form-control" [(ngModel)]="clienteForm.RazonSocial"
+                            name="RazonSocial" placeholder="Ej. Peluquería Estilo Único" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">NIT / Cédula</label>
+                        <input type="text" class="form-control" [(ngModel)]="clienteForm.NIT" name="NIT">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Teléfono</label>
+                        <input type="text" class="form-control" [(ngModel)]="clienteForm.Telefono" name="Telefono">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Correo</label>
+                        <input type="email" class="form-control" [(ngModel)]="clienteForm.Correo" name="Correo">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Dirección</label>
+                        <input type="text" class="form-control" [(ngModel)]="clienteForm.Direccion" name="Direccion">
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary fw-bold">
+                            {{ modoEdicion ? 'Actualizar Cambios' : 'Guardar Cliente' }}
+                        </button>
+                        <button type="button" class="btn btn-secondary" *ngIf="modoEdicion" (click)="resetFormulario()">
+                            Cancelar Edición
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Columna Derecha: Listado de Clientes -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">👥 Clientes</h4>
+                <h6 class="card-subtitle text-muted mb-3">Listado sincronizado con la base de datos</h6>
+
+                <div class="table-responsive" style="max-height: 550px; overflow-y: auto;">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Razón Social</th>
+                                <th>Tipo</th>
+                                <th>NIT/Cédula</th>
+                                <th>Teléfono</th>
+                                <th>Estado</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let cli of listaClientes" [ngClass]="{'table-secondary text-muted': !cli.Activo}">
+                                <td>
+                                    <h6 class="mb-0 fw-bold">{{ cli.RazonSocial }}</h6>
+                                    <small class="text-muted">{{ cli.Correo }}</small>
+                                </td>
+                                <td>
+                                    <span [ngClass]="cli.TipoCliente === 'MAYORISTA' ? 'badge bg-info text-dark' : 'badge bg-light text-dark border'">
+                                        {{ cli.TipoCliente === 'MAYORISTA' ? '🏷️ Mayorista' : 'Detal' }}
+                                    </span>
+                                </td>
+                                <td>{{ cli.NIT || '—' }}</td>
+                                <td>{{ cli.Telefono || '—' }}</td>
+                                <td>
+                                    <span [ngClass]="cli.Activo ? 'badge bg-success' : 'badge bg-secondary'">
+                                        {{ cli.Activo ? 'Activo' : 'Inactivo' }}
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <button class="btn btn-sm btn-warning me-2 text-white"
+                                        (click)="seleccionarParaEditar(cli)" title="Editar">
+                                        Editar
+                                    </button>
+                                    <button class="btn btn-sm" [ngClass]="cli.Activo ? 'btn-danger' : 'btn-success'"
+                                        (click)="cambiarEstado(cli)" [title]="cli.Activo ? 'Desactivar' : 'Activar'">
+                                        {{ cli.Activo ? 'Desactivar' : 'Activar' }}
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr *ngIf="listaClientes.length === 0">
+                                <td colspan="6" class="text-center text-muted py-4">No hay clientes registrados.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

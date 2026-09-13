@@ -2,13 +2,6 @@ import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { MiscelaneaService } from '../../services/miscelanea-service';
 import { AlertService } from '../../services/alert-service';
 
-const TIPOS_DOCUMENTO = [
-  { valor: 'RUT', etiqueta: 'RUT' },
-  { valor: 'CAMARA_COMERCIO', etiqueta: 'Cámara de Comercio' },
-  { valor: 'LISTA_PRECIOS', etiqueta: 'Lista de Precios' },
-  { valor: 'OTRO', etiqueta: 'Otro' },
-];
-
 @Component({
   selector: 'app-proveedores',
   standalone: false,
@@ -16,21 +9,29 @@ const TIPOS_DOCUMENTO = [
   styleUrl: './proveedores.css',
 })
 export class Proveedores implements OnInit {
+  tab: 'proveedores' | 'tipos' = 'proveedores';
+
   listaProveedores: any[] = [];
   modoEdicion: boolean = false;
+  mostrarModal: boolean = false;
   proveedorForm: any = this.formularioVacio();
 
   // --- Productos que vende el proveedor (checkboxes en el formulario) ---
   listaProductos: any[] = [];
   productosSeleccionados: Set<number> = new Set();
 
+  // --- Tipos de documento (catálogo editable) ---
+  tiposDocumento: any[] = [];        // activos, para el <select> de subida
+  tiposDocumentoTodos: any[] = [];   // todos, para la pestaña de gestión
+  nuevoTipoNombre: string = '';
+  guardandoTipo: boolean = false;
+
   // --- Modal de documentos ---
-  tiposDocumento = TIPOS_DOCUMENTO;
   mostrarModalDocumentos: boolean = false;
-  proveedorDocumentos: any = null; // proveedor sobre el que se está gestionando documentos
+  proveedorDocumentos: any = null;
   listaDocumentos: any[] = [];
   archivoSeleccionado: File | null = null;
-  tipoDocumentoSeleccionado: string = 'RUT';
+  tipoDocumentoSeleccionado: string = '';
 
   constructor(
     private miscelaneaService: MiscelaneaService,
@@ -41,6 +42,7 @@ export class Proveedores implements OnInit {
   ngOnInit(): void {
     this.cargarProveedores();
     this.cargarProductos();
+    this.cargarTiposDocumento();
   }
 
   formularioVacio() {
@@ -51,7 +53,7 @@ export class Proveedores implements OnInit {
       Telefono: '',
       Correo: '',
       Direccion: '',
-      Contacto: ''
+      Contacto: '',
     };
   }
 
@@ -61,7 +63,7 @@ export class Proveedores implements OnInit {
         this.listaProveedores = data;
         this.cdr.detectChanges();
       },
-      error: (err) => console.error('Error al cargar proveedores', err)
+      error: (err) => console.error('Error al cargar proveedores', err),
     });
   }
 
@@ -71,7 +73,21 @@ export class Proveedores implements OnInit {
         this.listaProductos = data;
         this.cdr.detectChanges();
       },
-      error: (err) => console.error('Error al cargar productos', err)
+      error: (err) => console.error('Error al cargar productos', err),
+    });
+  }
+
+  cargarTiposDocumento() {
+    this.miscelaneaService.listarTiposDocumentoProveedor().subscribe({
+      next: (data) => {
+        this.tiposDocumentoTodos = data || [];
+        this.tiposDocumento = this.tiposDocumentoTodos.filter((t) => t.Activo);
+        if (!this.tipoDocumentoSeleccionado && this.tiposDocumento.length) {
+          this.tipoDocumentoSeleccionado = this.tiposDocumento[0].Codigo;
+        }
+        this.cdr.detectChanges();
+      },
+      error: (err) => console.error('Error al cargar tipos de documento', err),
     });
   }
 
@@ -83,6 +99,18 @@ export class Proveedores implements OnInit {
     }
   }
 
+  // --- Modal crear / editar proveedor ---
+
+  abrirModalNuevo() {
+    this.resetFormulario();
+    this.mostrarModal = true;
+  }
+
+  cerrarModal() {
+    this.mostrarModal = false;
+    this.resetFormulario();
+  }
+
   guardarProveedor() {
     if (!this.proveedorForm.RazonSocial || !this.proveedorForm.NIT) {
       this.alertService.advertencia('Por favor completa los campos obligatorios (Razón Social y NIT).');
@@ -92,33 +120,33 @@ export class Proveedores implements OnInit {
     if (this.modoEdicion) {
       this.miscelaneaService.actualizarProveedor(this.proveedorForm.Id, this.proveedorForm).subscribe({
         next: () => this.guardarProductosDelProveedor(this.proveedorForm.Id, '¡Proveedor actualizado con éxito!'),
-        error: (err) => this.alertService.error('Error al actualizar el proveedor: ' + (err.error?.mensaje || err.message))
+        error: (err) => this.alertService.error('Error al actualizar el proveedor: ' + (err.error?.mensaje || err.message)),
       });
     } else {
       this.miscelaneaService.registrarProveedor(this.proveedorForm).subscribe({
         next: (res: any) => this.guardarProductosDelProveedor(res.proveedorId, '¡Proveedor registrado con éxito!'),
-        error: (err) => this.alertService.error('Error al registrar el proveedor: ' + (err.error?.mensaje || err.message))
+        error: (err) => this.alertService.error('Error al registrar el proveedor: ' + (err.error?.mensaje || err.message)),
       });
     }
   }
 
-  // Después de crear/actualizar el proveedor, guarda qué productos vende
-  // (siempre reemplaza la lista completa por la selección actual de checkboxes).
   private guardarProductosDelProveedor(proveedorId: number, mensajeExito: string) {
     const productoIds = Array.from(this.productosSeleccionados);
     this.miscelaneaService.asociarProductosProveedor(proveedorId, productoIds).subscribe({
       next: () => {
         this.alertService.exito(mensajeExito);
-        this.resetFormulario();
+        this.cerrarModal();
         this.cargarProveedores();
       },
-      error: (err) => this.alertService.error('El proveedor se guardó, pero hubo un error asociando sus productos: ' + (err.error?.mensaje || err.message))
+      error: (err) =>
+        this.alertService.error('El proveedor se guardó, pero hubo un error asociando sus productos: ' + (err.error?.mensaje || err.message)),
     });
   }
 
   seleccionarParaEditar(proveedor: any) {
     this.proveedorForm = { ...proveedor };
     this.modoEdicion = true;
+    this.mostrarModal = true;
     this.productosSeleccionados = new Set();
 
     this.miscelaneaService.obtenerProductosDeProveedor(proveedor.Id).subscribe({
@@ -126,7 +154,7 @@ export class Proveedores implements OnInit {
         this.productosSeleccionados = new Set(productos.map((p: any) => p.Id));
         this.cdr.detectChanges();
       },
-      error: (err) => console.error('Error al cargar los productos del proveedor', err)
+      error: (err) => console.error('Error al cargar los productos del proveedor', err),
     });
   }
 
@@ -140,7 +168,7 @@ export class Proveedores implements OnInit {
         this.alertService.exito(`Proveedor ${accion === 'activar' ? 'activado' : 'desactivado'} correctamente.`);
         this.cargarProveedores();
       },
-      error: (err) => this.alertService.error('Error al cambiar el estado del proveedor: ' + (err.error?.error || err.message))
+      error: (err) => this.alertService.error('Error al cambiar el estado del proveedor: ' + (err.error?.error || err.message)),
     });
   }
 
@@ -155,7 +183,7 @@ export class Proveedores implements OnInit {
   abrirModalDocumentos(proveedor: any) {
     this.proveedorDocumentos = proveedor;
     this.archivoSeleccionado = null;
-    this.tipoDocumentoSeleccionado = 'RUT';
+    if (this.tiposDocumento.length) this.tipoDocumentoSeleccionado = this.tiposDocumento[0].Codigo;
     this.mostrarModalDocumentos = true;
     this.cargarDocumentos();
   }
@@ -172,7 +200,7 @@ export class Proveedores implements OnInit {
         this.listaDocumentos = data;
         this.cdr.detectChanges();
       },
-      error: (err) => console.error('Error al cargar documentos', err)
+      error: (err) => console.error('Error al cargar documentos', err),
     });
   }
 
@@ -186,17 +214,21 @@ export class Proveedores implements OnInit {
       this.alertService.advertencia('Selecciona un archivo (PDF, XLS o XLSX).');
       return;
     }
+    if (!this.tipoDocumentoSeleccionado) {
+      this.alertService.advertencia('Selecciona un tipo de documento.');
+      return;
+    }
 
-    this.miscelaneaService.subirDocumentoProveedor(
-      this.proveedorDocumentos.Id, this.archivoSeleccionado, this.tipoDocumentoSeleccionado
-    ).subscribe({
-      next: () => {
-        this.alertService.exito('Documento subido con éxito.');
-        this.archivoSeleccionado = null;
-        this.cargarDocumentos();
-      },
-      error: (err) => this.alertService.error('Error al subir el documento: ' + (err.error?.mensaje || err.message))
-    });
+    this.miscelaneaService
+      .subirDocumentoProveedor(this.proveedorDocumentos.Id, this.archivoSeleccionado, this.tipoDocumentoSeleccionado)
+      .subscribe({
+        next: () => {
+          this.alertService.exito('Documento subido con éxito.');
+          this.archivoSeleccionado = null;
+          this.cargarDocumentos();
+        },
+        error: (err) => this.alertService.error('Error al subir el documento: ' + (err.error?.mensaje || err.message)),
+      });
   }
 
   descargarDocumento(doc: any) {
@@ -209,7 +241,7 @@ export class Proveedores implements OnInit {
         a.click();
         window.URL.revokeObjectURL(url);
       },
-      error: () => this.alertService.error('No se pudo descargar el documento.')
+      error: () => this.alertService.error('No se pudo descargar el documento.'),
     });
   }
 
@@ -222,11 +254,65 @@ export class Proveedores implements OnInit {
         this.alertService.exito('Documento eliminado.');
         this.cargarDocumentos();
       },
-      error: () => this.alertService.error('No se pudo eliminar el documento.')
+      error: () => this.alertService.error('No se pudo eliminar el documento.'),
     });
   }
 
-  etiquetaTipoDocumento(valor: string): string {
-    return this.tiposDocumento.find(t => t.valor === valor)?.etiqueta || valor;
+  etiquetaTipoDocumento(codigo: string): string {
+    return this.tiposDocumentoTodos.find((t) => t.Codigo === codigo)?.Nombre || codigo;
+  }
+
+  // --- Pestaña: tipos de documento ---
+
+  crearTipo() {
+    const nombre = (this.nuevoTipoNombre || '').trim();
+    if (!nombre) {
+      this.alertService.advertencia('Escribe el nombre del tipo de documento.');
+      return;
+    }
+    this.guardandoTipo = true;
+    this.miscelaneaService.crearTipoDocumentoProveedor(nombre).subscribe({
+      next: () => {
+        this.guardandoTipo = false;
+        this.nuevoTipoNombre = '';
+        this.alertService.exito('Tipo de documento creado.');
+        this.cargarTiposDocumento();
+      },
+      error: (err) => {
+        this.guardandoTipo = false;
+        this.alertService.error('Error: ' + (err.error?.mensaje || err.message));
+      },
+    });
+  }
+
+  toggleActivoTipo(t: any) {
+    this.miscelaneaService.actualizarTipoDocumentoProveedor(t.Id, { nombre: t.Nombre, activo: !t.Activo }).subscribe({
+      next: () => this.cargarTiposDocumento(),
+      error: (err) => this.alertService.error('Error: ' + (err.error?.mensaje || err.message)),
+    });
+  }
+
+  async renombrarTipo(t: any) {
+    const nombre = prompt('Nuevo nombre para el tipo de documento:', t.Nombre);
+    if (nombre == null || !nombre.trim() || nombre.trim() === t.Nombre) return;
+    this.miscelaneaService.actualizarTipoDocumentoProveedor(t.Id, { nombre: nombre.trim(), activo: t.Activo }).subscribe({
+      next: () => {
+        this.alertService.exito('Nombre actualizado.');
+        this.cargarTiposDocumento();
+      },
+      error: (err) => this.alertService.error('Error: ' + (err.error?.mensaje || err.message)),
+    });
+  }
+
+  async eliminarTipo(t: any) {
+    const confirmado = await this.alertService.confirmar(`¿Eliminar el tipo "${t.Nombre}"?`, 'Eliminar tipo');
+    if (!confirmado) return;
+    this.miscelaneaService.eliminarTipoDocumentoProveedor(t.Id).subscribe({
+      next: () => {
+        this.alertService.exito('Tipo eliminado.');
+        this.cargarTiposDocumento();
+      },
+      error: (err) => this.alertService.error(err.error?.mensaje || 'No se pudo eliminar.'),
+    });
   }
 }

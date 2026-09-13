@@ -1,0 +1,713 @@
+/* ==========================================================================
+   Miscelánea POS — Capa de tema moderno sobre Bootstrap 5.3
+   Fase 1: chrome global (tipografía, superficies, sombras, radios) + shell.
+   Claro / oscuro con el atributo nativo [data-bs-theme].
+   ========================================================================== */
+
+/* ---------- Tokens base (no cambian entre temas) ---------- */
+:root {
+  --mp-font: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+
+  --mp-radius-xl: 1rem;
+  --mp-radius: 0.75rem;
+  --mp-radius-sm: 0.5rem;
+
+  --mp-sidebar-w: 264px;
+  --mp-sidebar-w-collapsed: 76px;
+  --mp-header-h: 64px;
+
+  --mp-transition: 180ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ---------- Paleta: claro ---------- */
+:root,
+:root[data-bs-theme='light'] {
+  --mp-bg: #f4f5f9;
+  --mp-surface: #ffffff;
+  --mp-surface-2: #f8f9fc;
+  --mp-border: #e6e8ef;
+  --mp-text: #1f2430;
+  --mp-text-muted: #6b7280;
+
+  --mp-sidebar-bg: #ffffff;
+  --mp-sidebar-text: #4b5563;
+  --mp-sidebar-active-bg: rgba(var(--mp-primary-rgb), 0.1);
+  --mp-sidebar-active-text: var(--mp-primary);
+
+  --mp-shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.05);
+  --mp-shadow: 0 4px 12px rgba(16, 24, 40, 0.08);
+  --mp-shadow-lg: 0 12px 32px rgba(16, 24, 40, 0.12);
+}
+
+/* ---------- Paleta: oscuro ---------- */
+:root[data-bs-theme='dark'] {
+  --mp-bg: #0f1117;
+  --mp-surface: #171a21;
+  --mp-surface-2: #1e222b;
+  --mp-border: #2a2f3a;
+  --mp-text: #e5e7eb;
+  --mp-text-muted: #9096a2;
+
+  --mp-sidebar-bg: #171a21;
+  --mp-sidebar-text: #9ca3af;
+  --mp-sidebar-active-bg: rgba(var(--mp-primary-rgb), 0.22);
+  --mp-sidebar-active-text: var(--mp-primary);
+
+  --mp-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --mp-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  --mp-shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.55);
+}
+
+/* ---------- Acentos de color (atributo data-mp-accent) ----------
+   Modo claro primero; los overrides de modo oscuro van todos después
+   para que ganen por especificidad + orden. */
+:root,
+:root[data-mp-accent='indigo'] {
+  --mp-primary: #4f46e5;
+  --mp-primary-rgb: 79, 70, 229;
+  --mp-primary-hover: #4338ca;
+}
+:root[data-mp-accent='red'] {
+  --mp-primary: #e11d48;
+  --mp-primary-rgb: 225, 29, 72;
+  --mp-primary-hover: #be123c;
+}
+:root[data-mp-accent='green'] {
+  --mp-primary: #059669;
+  --mp-primary-rgb: 5, 150, 105;
+  --mp-primary-hover: #047857;
+}
+:root[data-mp-accent='pink'] {
+  --mp-primary: #db2777;
+  --mp-primary-rgb: 219, 39, 119;
+  --mp-primary-hover: #be185d;
+}
+:root[data-mp-accent='amber'] {
+  --mp-primary: #d97706;
+  --mp-primary-rgb: 217, 119, 6;
+  --mp-primary-hover: #b45309;
+}
+:root[data-mp-accent='teal'] {
+  --mp-primary: #0d9488;
+  --mp-primary-rgb: 13, 148, 136;
+  --mp-primary-hover: #0f766e;
+}
+:root[data-mp-accent='mono'] {
+  --mp-primary: #3f3f46;
+  --mp-primary-rgb: 63, 63, 70;
+  --mp-primary-hover: #27272a;
+}
+
+:root[data-bs-theme='dark'],
+:root[data-bs-theme='dark'][data-mp-accent='indigo'] {
+  --mp-primary: #6366f1;
+  --mp-primary-rgb: 99, 102, 241;
+  --mp-primary-hover: #818cf8;
+}
+:root[data-bs-theme='dark'][data-mp-accent='red'] {
+  --mp-primary: #fb7185;
+  --mp-primary-rgb: 251, 113, 133;
+  --mp-primary-hover: #fda4af;
+}
+:root[data-bs-theme='dark'][data-mp-accent='green'] {
+  --mp-primary: #34d399;
+  --mp-primary-rgb: 52, 211, 153;
+  --mp-primary-hover: #6ee7b7;
+}
+:root[data-bs-theme='dark'][data-mp-accent='pink'] {
+  --mp-primary: #f472b6;
+  --mp-primary-rgb: 244, 114, 182;
+  --mp-primary-hover: #f9a8d4;
+}
+:root[data-bs-theme='dark'][data-mp-accent='amber'] {
+  --mp-primary: #fbbf24;
+  --mp-primary-rgb: 251, 191, 36;
+  --mp-primary-hover: #fcd34d;
+}
+:root[data-bs-theme='dark'][data-mp-accent='teal'] {
+  --mp-primary: #2dd4bf;
+  --mp-primary-rgb: 45, 212, 191;
+  --mp-primary-hover: #5eead4;
+}
+:root[data-bs-theme='dark'][data-mp-accent='mono'] {
+  --mp-primary: #e4e4e7;
+  --mp-primary-rgb: 228, 228, 231;
+  --mp-primary-hover: #f4f4f5;
+}
+
+/* ---------- Puente hacia las variables de Bootstrap ---------- */
+:root {
+  --bs-body-font-family: var(--mp-font);
+  --bs-body-bg: var(--mp-bg);
+  --bs-body-color: var(--mp-text);
+  --bs-secondary-color: var(--mp-text-muted);
+  --bs-border-color: var(--mp-border);
+  --bs-emphasis-color: var(--mp-text);
+
+  --bs-primary: var(--mp-primary);
+  --bs-primary-rgb: var(--mp-primary-rgb);
+  --bs-link-color: var(--mp-primary);
+  --bs-link-color-rgb: var(--mp-primary-rgb);
+  --bs-link-hover-color: var(--mp-primary-hover);
+
+  --bs-border-radius: var(--mp-radius);
+  --bs-border-radius-sm: var(--mp-radius-sm);
+  --bs-border-radius-lg: var(--mp-radius-xl);
+  --bs-border-radius-xl: var(--mp-radius-xl);
+}
+
+body {
+  background-color: var(--mp-bg);
+  color: var(--mp-text);
+  font-family: var(--mp-font);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--mp-text);
+}
+
+/* ==========================================================================
+   Componentes
+   ========================================================================== */
+
+/* ---------- Cards ---------- */
+.card {
+  --bs-card-bg: var(--mp-surface);
+  --bs-card-border-color: var(--mp-border);
+  --bs-card-border-radius: var(--mp-radius);
+  --bs-card-cap-bg: transparent;
+  --bs-card-color: var(--mp-text);
+  box-shadow: var(--mp-shadow-sm);
+  border: 1px solid var(--mp-border);
+  transition: box-shadow var(--mp-transition);
+}
+
+.card > .card-body {
+  padding: 1.25rem 1.5rem;
+}
+
+.card-title {
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+/* ---------- Botones ---------- */
+.btn {
+  --bs-btn-border-radius: var(--mp-radius-sm);
+  --bs-btn-font-weight: 500;
+  --bs-btn-padding-y: 0.5rem;
+  --bs-btn-padding-x: 1rem;
+  transition: background-color var(--mp-transition), border-color var(--mp-transition),
+    box-shadow var(--mp-transition), transform var(--mp-transition);
+}
+.btn:active {
+  transform: translateY(1px);
+}
+.btn-sm {
+  --bs-btn-border-radius: var(--mp-radius-sm);
+}
+
+.btn-primary {
+  --bs-btn-bg: var(--mp-primary);
+  --bs-btn-border-color: var(--mp-primary);
+  --bs-btn-hover-bg: var(--mp-primary-hover);
+  --bs-btn-hover-border-color: var(--mp-primary-hover);
+  --bs-btn-active-bg: var(--mp-primary-hover);
+  --bs-btn-active-border-color: var(--mp-primary-hover);
+  --bs-btn-disabled-bg: var(--mp-primary);
+  --bs-btn-disabled-border-color: var(--mp-primary);
+  box-shadow: 0 1px 2px rgba(var(--mp-primary-rgb), 0.35);
+}
+
+.btn-outline-primary {
+  --bs-btn-color: var(--mp-primary);
+  --bs-btn-border-color: var(--mp-primary);
+  --bs-btn-hover-bg: var(--mp-primary);
+  --bs-btn-hover-border-color: var(--mp-primary);
+  --bs-btn-active-bg: var(--mp-primary);
+}
+
+/* Acentos claros: texto oscuro sobre el botón primario para contraste */
+:root[data-mp-accent='amber'] .btn-primary,
+:root[data-bs-theme='dark'][data-mp-accent='mono'] .btn-primary {
+  --bs-btn-color: #1f2430;
+  --bs-btn-hover-color: #1f2430;
+  --bs-btn-active-color: #1f2430;
+  --bs-btn-disabled-color: #1f2430;
+}
+
+/* ---------- Formularios ---------- */
+.form-control,
+.form-select {
+  --bs-border-radius: var(--mp-radius-sm);
+  background-color: var(--mp-surface);
+  border-color: var(--mp-border);
+  color: var(--mp-text);
+  transition: border-color var(--mp-transition), box-shadow var(--mp-transition);
+}
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--mp-primary);
+  box-shadow: 0 0 0 3px rgba(var(--mp-primary-rgb), 0.18);
+}
+.form-control::placeholder {
+  color: var(--mp-text-muted);
+  opacity: 0.75;
+}
+.form-label {
+  font-weight: 500;
+  color: var(--mp-text);
+  margin-bottom: 0.35rem;
+}
+.input-group-text {
+  background-color: var(--mp-surface-2);
+  border-color: var(--mp-border);
+  color: var(--mp-text-muted);
+}
+/* Compatibilidad: selects que aún usan la clase de Bootstrap 4 */
+select.custom-select {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 2.25rem 0.5rem 0.85rem;
+  font-size: 0.9rem;
+  border: 1px solid var(--mp-border);
+  border-radius: var(--mp-radius-sm);
+  background-color: var(--mp-surface);
+  color: var(--mp-text);
+  appearance: none;
+}
+/* La lista desplegable nativa en modo oscuro */
+.form-select option,
+select.custom-select option {
+  background-color: var(--mp-surface);
+  color: var(--mp-text);
+}
+.form-check-input:checked {
+  background-color: var(--mp-primary);
+  border-color: var(--mp-primary);
+}
+.form-check-input:focus {
+  border-color: var(--mp-primary);
+  box-shadow: 0 0 0 3px rgba(var(--mp-primary-rgb), 0.18);
+}
+
+/* ---------- Tablas ---------- */
+.table {
+  --bs-table-bg: transparent;
+  --bs-table-color: var(--mp-text);
+  --bs-table-border-color: var(--mp-border);
+  --bs-table-hover-bg: var(--mp-surface-2);
+  --bs-table-hover-color: var(--mp-text);
+  margin-bottom: 0;
+}
+.table > thead th {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--mp-text-muted);
+  border-bottom: 1px solid var(--mp-border);
+  background-color: var(--mp-surface-2);
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+.table > tbody td {
+  border-bottom: 1px solid var(--mp-border);
+  vertical-align: middle;
+}
+.table-responsive::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+/* ---------- Badges ---------- */
+.badge {
+  --bs-badge-border-radius: 999px;
+  --bs-badge-font-weight: 600;
+  --bs-badge-padding-x: 0.6em;
+  --bs-badge-padding-y: 0.38em;
+  letter-spacing: 0.01em;
+}
+
+/* ---------- Dropdowns ---------- */
+.dropdown-menu {
+  --bs-dropdown-bg: var(--mp-surface);
+  --bs-dropdown-border-color: var(--mp-border);
+  --bs-dropdown-border-radius: var(--mp-radius);
+  --bs-dropdown-link-color: var(--mp-text);
+  --bs-dropdown-link-hover-bg: var(--mp-surface-2);
+  --bs-dropdown-link-active-bg: var(--mp-sidebar-active-bg);
+  --bs-dropdown-link-active-color: var(--mp-sidebar-active-text);
+  box-shadow: var(--mp-shadow-lg);
+  padding: 0.4rem;
+}
+.dropdown-item {
+  border-radius: var(--mp-radius-sm);
+  padding: 0.5rem 0.75rem;
+}
+
+/* ---------- Selector de tema (header) ---------- */
+.theme-menu {
+  width: 260px;
+}
+.theme-swatches {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.4rem;
+}
+.theme-swatch {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 999px;
+  border: 2px solid var(--mp-border);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 0.85rem;
+  padding: 0;
+  transition: transform var(--mp-transition), box-shadow var(--mp-transition);
+}
+.theme-swatch:hover {
+  transform: scale(1.12);
+}
+.theme-swatch.is-active {
+  border-color: var(--mp-text);
+  box-shadow: 0 0 0 2px var(--mp-surface), 0 0 0 4px var(--mp-primary);
+}
+
+/* ---------- Scrollbar global ---------- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--mp-border) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--mp-border);
+  border-radius: 999px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ==========================================================================
+   Shell de la aplicación (sidebar + topbar + contenido)
+   ========================================================================== */
+.app-shell {
+  min-height: 100vh;
+  background-color: var(--mp-bg);
+}
+
+/* ---------- Sidebar ---------- */
+.app-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: var(--mp-sidebar-w);
+  background-color: var(--mp-sidebar-bg);
+  border-right: 1px solid var(--mp-border);
+  display: flex;
+  flex-direction: column;
+  z-index: 1040;
+  transition: width var(--mp-transition), transform var(--mp-transition);
+}
+.app-sidebar__brand {
+  height: var(--mp-header-h);
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0 1.25rem;
+  border-bottom: 1px solid var(--mp-border);
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--mp-text);
+  white-space: nowrap;
+  overflow: hidden;
+}
+.app-sidebar__brand-icon {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  border-radius: var(--mp-radius-sm);
+  background: linear-gradient(135deg, var(--mp-primary), var(--mp-primary-hover));
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+}
+.app-sidebar__brand-logo {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  border-radius: var(--mp-radius-sm);
+  object-fit: cover;
+}
+.app-sidebar__nav {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0.75rem;
+}
+.app-sidebar__section {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--mp-text-muted);
+  padding: 1rem 0.75rem 0.4rem;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.app-sidebar__link {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: var(--mp-radius-sm);
+  color: var(--mp-sidebar-text);
+  font-weight: 500;
+  font-size: 0.9rem;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color var(--mp-transition), color var(--mp-transition);
+}
+.app-sidebar__link:hover {
+  background-color: var(--mp-surface-2);
+  color: var(--mp-text);
+}
+.app-sidebar__link.active {
+  background-color: var(--mp-sidebar-active-bg);
+  color: var(--mp-sidebar-active-text);
+  font-weight: 600;
+}
+.app-sidebar__link > i {
+  font-size: 1.15rem;
+  flex: 0 0 1.25rem;
+  text-align: center;
+}
+.app-sidebar__link-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.app-sidebar__footer {
+  border-top: 1px solid var(--mp-border);
+  padding: 0.75rem;
+}
+
+/* ---------- Contenido principal ---------- */
+.app-main {
+  margin-left: var(--mp-sidebar-w);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  transition: margin-left var(--mp-transition);
+}
+.app-header {
+  position: sticky;
+  top: 0;
+  height: var(--mp-header-h);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0 1.5rem;
+  background-color: color-mix(in srgb, var(--mp-surface) 88%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--mp-border);
+  z-index: 1030;
+}
+.app-header__spacer {
+  flex: 1;
+}
+.app-icon-btn {
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: var(--mp-radius-sm);
+  background: transparent;
+  color: var(--mp-text-muted);
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: background-color var(--mp-transition), color var(--mp-transition);
+}
+.app-icon-btn:hover {
+  background-color: var(--mp-surface-2);
+  color: var(--mp-text);
+}
+.app-content {
+  flex: 1;
+  padding: 1.5rem;
+}
+
+/* ---------- Estado colapsado (desktop) ---------- */
+.app-shell.is-collapsed .app-sidebar {
+  width: var(--mp-sidebar-w-collapsed);
+}
+.app-shell.is-collapsed .app-main {
+  margin-left: var(--mp-sidebar-w-collapsed);
+}
+.app-shell.is-collapsed .app-sidebar__brand span,
+.app-shell.is-collapsed .app-sidebar__section,
+.app-shell.is-collapsed .app-sidebar__link-text,
+.app-shell.is-collapsed .app-sidebar__footer-info {
+  display: none;
+}
+.app-shell.is-collapsed .app-sidebar__link {
+  justify-content: center;
+}
+.app-shell.is-collapsed .app-sidebar__nav {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+.app-shell.is-collapsed .app-sidebar__footer {
+  padding: 0.5rem;
+}
+.app-shell.is-collapsed .app-sidebar__footer .btn {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+/* ---------- Backdrop móvil ---------- */
+.app-sidebar__backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1035;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 991.98px) {
+  .app-sidebar {
+    transform: translateX(-100%);
+    width: var(--mp-sidebar-w);
+  }
+  .app-shell.is-mobile-open .app-sidebar {
+    transform: translateX(0);
+    box-shadow: var(--mp-shadow-lg);
+  }
+  .app-shell.is-mobile-open .app-sidebar__backdrop {
+    display: block;
+  }
+  .app-main {
+    margin-left: 0;
+  }
+  .app-shell.is-collapsed .app-main {
+    margin-left: 0;
+  }
+  .app-content {
+    padding: 1rem;
+  }
+}
+
+/* ---------- Encabezado de página / breadcrumbs ---------- */
+.page-titles {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+.page-titles h1 {
+  font-size: 1.35rem;
+  margin: 0;
+}
+.page-titles .breadcrumb {
+  margin: 0;
+  --bs-breadcrumb-divider-color: var(--mp-text-muted);
+}
+.page-titles .breadcrumb-item,
+.page-titles .breadcrumb-item a {
+  color: var(--mp-text-muted);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+.page-titles .breadcrumb-item.active {
+  color: var(--mp-text);
+}
+
+/* ---------- SweetAlert2: acercarlo al tema ---------- */
+.swal2-popup {
+  border-radius: var(--mp-radius) !important;
+  background: var(--mp-surface) !important;
+  color: var(--mp-text) !important;
+}
+
+/* ---------- Modal simple reutilizable (páginas con overlay propio) ---------- */
+.modal-backdrop-custom {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1040;
+}
+.modal-custom {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 40px 16px;
+  overflow-y: auto;
+  z-index: 1050;
+}
+.modal-custom-dialog {
+  width: 100%;
+  max-width: 700px;
+}
+
+/* ---------- Pestañas (nav-tabs) ---------- */
+.nav-tabs {
+  border-bottom-color: var(--mp-border);
+}
+.nav-tabs .nav-link {
+  border: none;
+  background: transparent;
+  color: var(--mp-text-muted);
+  font-weight: 500;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.nav-tabs .nav-link:hover {
+  color: var(--mp-text);
+  border-color: transparent;
+}
+.nav-tabs .nav-link.active {
+  color: var(--mp-primary);
+  background: transparent;
+  border-color: transparent;
+  border-bottom-color: var(--mp-primary);
+}
+
+/* ---------- Acciones en tablas: no romper la fila, botones compactos ---------- */
+.acciones-tabla {
+  white-space: nowrap;
+}
+.acciones-tabla .btn {
+  padding: 0.3rem 0.5rem;
+}
+.btn.btn-icon {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  line-height: 1;
+}
+.btn-icon + .btn-icon {
+  margin-left: 0.3rem;
+}

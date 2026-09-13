@@ -1,50 +1,100 @@
 .login-tedi-wrapper {
+  position: relative;
+  min-height: 100vh;
   display: flex;
-  height: 100vh;
-  width: 100%;
-  background: #fff;
-}
-
-.login-tedi-image-col {
-  flex: 1 1 60%;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 2rem clamp(2rem, 7vw, 7rem);
   overflow: hidden;
 }
 
-.login-tedi-image {
-  display: block;
+/* Imagen a pantalla completa */
+.login-bg {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: 75% 35%;
+  object-position: center;
+  z-index: 0;
 }
 
-.login-tedi-panel {
-  flex: 0 0 420px;
+/* Velo muy sutil, solo del lado de la tarjeta, para legibilidad sin apagar la foto */
+.login-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    to left,
+    rgba(8, 10, 16, 0.42) 0%,
+    rgba(8, 10, 16, 0.12) 45%,
+    rgba(8, 10, 16, 0) 70%
+  );
+}
+
+/* Tarjeta de cristal (glassmorphism): translúcida, deja ver la imagen detrás */
+.login-tedi-wrapper .login-box {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 400px;
+  margin: 0;
+  border-radius: 26px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: color-mix(in srgb, var(--mp-surface, #171a21) 46%, transparent);
+  -webkit-backdrop-filter: blur(22px) saturate(1.4);
+  backdrop-filter: blur(22px) saturate(1.4);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+
+.login-tedi-wrapper .login-box > .card-body {
+  padding: 2.75rem 2.5rem;
+}
+
+.login-brand-icon {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--mp-primary, #6366f1), var(--mp-primary-hover, #818cf8));
+  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 30px;
+  font-size: 1.65rem;
+  box-shadow: 0 8px 20px rgba(var(--mp-primary-rgb, 99, 102, 241), 0.45);
 }
 
-.login-tedi-panel .login-box {
-  width: 100%;
-  margin: 0;
-  box-shadow: none;
+/* Campos translúcidos a juego con el cristal */
+.login-tedi-wrapper .login-box .form-control {
+  background: color-mix(in srgb, var(--mp-surface, #171a21) 35%, transparent);
+  border-color: color-mix(in srgb, var(--mp-text, #e5e7eb) 16%, transparent);
+  color: var(--mp-text);
+}
+.login-tedi-wrapper .login-box .form-control:focus {
+  background: color-mix(in srgb, var(--mp-surface, #171a21) 55%, transparent);
+}
+.login-tedi-wrapper .login-box .form-label {
+  font-size: 0.8rem;
+  letter-spacing: 0.01em;
+}
+
+/* Botón con degradado */
+.login-tedi-wrapper .login-box .btn-primary {
   border: none;
+  background-image: linear-gradient(
+    135deg,
+    var(--mp-primary, #6366f1),
+    var(--mp-primary-hover, #a855f7)
+  );
 }
 
-@media (max-width: 900px) {
+@media (max-width: 767.98px) {
   .login-tedi-wrapper {
-    flex-direction: column;
-    height: auto;
-    min-height: 100vh;
+    justify-content: center;
+    padding: 1.25rem;
   }
-
-  .login-tedi-image-col {
-    flex: 0 0 220px;
-  }
-
-  .login-tedi-panel {
-    flex: 1 1 auto;
+  .login-tedi-wrapper .login-box > .card-body {
+    padding: 2.25rem 1.75rem;
   }
 }

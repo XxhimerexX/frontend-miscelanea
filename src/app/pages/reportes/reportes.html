@@ -40,6 +40,9 @@
   <li class="nav-item">
     <a class="nav-link" [class.active]="tabActiva === 'stock'" href="javascript:void(0)" (click)="cambiarTab('stock')">Stock bajo / Baja rotación</a>
   </li>
+  <li class="nav-item">
+    <a class="nav-link" [class.active]="tabActiva === 'admin'" href="javascript:void(0)" (click)="cambiarTab('admin')">Administración</a>
+  </li>
 </ul>
 
 <!-- ============================= VENTAS POR PERÍODO ============================= -->
@@ -91,7 +94,7 @@
       <div class="d-flex">
         <h4 class="card-title"><span class="lstick"></span>Ventas por período</h4>
         <div class="ml-auto">
-          <select class="custom-select b-0" [(ngModel)]="filtroPeriodo" (change)="cargarVentasPeriodo()">
+          <select class="form-select" [(ngModel)]="filtroPeriodo" (change)="cargarVentasPeriodo()">
             <option value="dia">Por Día</option>
             <option value="semana">Por Semana</option>
             <option value="mes">Por Mes</option>
@@ -112,7 +115,7 @@
       <div class="d-flex">
         <h4 class="card-title"><span class="lstick"></span>Top productos/categorías vendidos</h4>
         <div class="ml-auto">
-          <select class="custom-select b-0" [(ngModel)]="agruparProductos" (change)="cargarVentasProductos()">
+          <select class="form-select" [(ngModel)]="agruparProductos" (change)="cargarVentasProductos()">
             <option value="producto">Por Producto</option>
             <option value="categoria">Por Categoría</option>
           </select>
@@ -160,7 +163,7 @@
     <div class="card-body">
       <div class="d-flex justify-content-between align-items-center mb-3">
         <h4 class="card-title mb-0"><span class="lstick"></span>Márgenes de ganancia</h4>
-        <select class="custom-select b-0" style="width: auto;" [(ngModel)]="agruparMargenes" (change)="cargarMargenes()">
+        <select class="form-select" style="width: auto;" [(ngModel)]="agruparMargenes" (change)="cargarMargenes()">
           <option value="producto">Por Producto</option>
           <option value="categoria">Por Categoría</option>
         </select>
@@ -213,7 +216,7 @@
     <div class="card-body">
       <div class="d-flex align-items-center gap-2 mb-3">
         <h4 class="card-title mb-0"><span class="lstick"></span>Kardex de inventario</h4>
-        <select class="custom-select b-0 ml-auto" style="width: auto; min-width: 250px;" [(ngModel)]="productoKardexId" (change)="cargarKardex()">
+        <select class="form-select ms-auto" style="width: auto; min-width: 250px;" [(ngModel)]="productoKardexId" (change)="cargarKardex()">
           <option [ngValue]="null" disabled>Selecciona un producto...</option>
           <option *ngFor="let prod of listaProductos" [ngValue]="prod.Id">{{ prod.Nombre }}</option>
         </select>
@@ -334,6 +337,52 @@
             </tbody>
           </table>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================= ADMINISTRACIÓN ============================= -->
+<div *ngIf="tabActiva === 'admin'">
+  <div class="card">
+    <div class="card-body">
+      <div class="d-flex flex-wrap align-items-end gap-2 mb-3">
+        <div class="flex-grow-1" style="max-width: 380px;">
+          <label class="form-label small fw-semibold mb-1">Reporte</label>
+          <select class="form-select" [(ngModel)]="reporteAdminSel" (change)="cargarReporteAdmin()">
+            <option *ngFor="let r of reportesAdmin" [value]="r.tipo">{{ r.titulo }}</option>
+          </select>
+        </div>
+        <button class="btn btn-outline-success" (click)="descargarReporteAdminExcel()"
+          [disabled]="descargandoAdmin || !reporteAdminData.filas.length">
+          <i class="mdi mdi-file-excel"></i> {{ descargandoAdmin ? 'Generando...' : 'Descargar Excel' }}
+        </button>
+        <span class="text-muted small ms-auto">Usa el rango de fechas de arriba. (El inventario valorizado es del momento actual.)</span>
+      </div>
+
+      <div class="text-center text-muted py-4" *ngIf="cargandoAdmin">Cargando...</div>
+
+      <div class="table-responsive" *ngIf="!cargandoAdmin">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th *ngFor="let c of reporteAdminData.columnas">{{ c.h }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let fila of reporteAdminData.filas">
+              <td *ngFor="let c of reporteAdminData.columnas">
+                <ng-container *ngIf="c.fmt">{{ fila[c.k] == null ? '' : (fila[c.k] | number) }}</ng-container>
+                <ng-container *ngIf="!c.fmt">{{ fila[c.k] }}</ng-container>
+              </td>
+            </tr>
+            <tr *ngIf="!reporteAdminData.filas.length">
+              <td [attr.colspan]="reporteAdminData.columnas.length || 1" class="text-center text-muted py-4">
+                Sin datos para el reporte y rango seleccionados.
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>

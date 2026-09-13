@@ -1,28 +1,22 @@
-<div id="main-wrapper">
-    <app-header></app-header>
-    <app-sidebar></app-sidebar>
-    <div class="page-wrapper">
-        <div class="container-fluid">
-            <app-breadcrumbs></app-breadcrumbs>
+<div
+  class="app-shell"
+  [class.is-collapsed]="layout.sidebarColapsada()"
+  [class.is-mobile-open]="layout.sidebarMovilAbierta()">
+  <app-sidebar></app-sidebar>
 
-            <!-- ============================================================== -->
-            <!-- Start Page Content -->
-            <!-- ============================================================== -->
-            <div class="row">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-body">
-                            <router-outlet></router-outlet>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <!-- ============================================================== -->
-            <!-- End PAge Content -->
-            <!-- ============================================================== -->
+  <div class="app-sidebar__backdrop" (click)="layout.cerrarMovil()"></div>
+
+  <div class="app-main">
+    <app-header></app-header>
+
+    <main class="app-content">
+      <app-breadcrumbs></app-breadcrumbs>
+
+      <div class="card">
+        <div class="card-body">
+          <router-outlet></router-outlet>
         </div>
-    </div>
-    <!-- ============================================================== -->
-    <!-- End Page wrapper  -->
-    <!-- ============================================================== -->
+      </div>
+    </main>
+  </div>
 </div>

@@ -1,23 +1,123 @@
-<div class="row">
-  <div class="col-lg-4">
-    <div class="card">
+<!-- Pestañas -->
+<ul class="nav nav-tabs mb-3">
+  <li class="nav-item">
+    <button class="nav-link" [class.active]="tab === 'usuarios'" (click)="tab = 'usuarios'">
+      <i class="mdi mdi-account-multiple"></i> Usuarios
+    </button>
+  </li>
+  <li class="nav-item" *ngIf="esAdmin">
+    <button class="nav-link" [class.active]="tab === 'roles'" (click)="tab = 'roles'">
+      <i class="mdi mdi-shield-key"></i> Roles y permisos
+    </button>
+  </li>
+  <li class="nav-item" *ngIf="esAdmin">
+    <button class="nav-link" [class.active]="tab === 'config'" (click)="tab = 'config'">
+      <i class="mdi mdi-email-cog-outline"></i> Configuración de correo
+    </button>
+  </li>
+  <li class="nav-item" *ngIf="esAdmin">
+    <button class="nav-link" [class.active]="tab === 'empresa'" (click)="tab = 'empresa'">
+      <i class="mdi mdi-domain"></i> Mi empresa
+    </button>
+  </li>
+</ul>
+
+<!-- ============================ TAB USUARIOS ============================ -->
+<div *ngIf="tab === 'usuarios'">
+  <div class="card">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="card-title mb-0">👥 Usuarios del sistema</h4>
+        <button class="btn btn-primary fw-bold" (click)="abrirModalNuevo()">
+          <i class="mdi mdi-plus"></i> Nuevo usuario
+        </button>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Usuario</th>
+              <th>Correo</th>
+              <th>Rol</th>
+              <th>Estado</th>
+              <th class="text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let u of listaUsuarios">
+              <td>{{ u.Nombre }}</td>
+              <td><code class="small">{{ u.NombreUsuario }}</code></td>
+              <td>{{ u.Correo }}</td>
+              <td><span class="badge text-bg-secondary">{{ u.RolNombre }}</span></td>
+              <td>
+                <span class="badge" [ngClass]="u.Activo ? 'text-bg-success' : 'text-bg-danger'">
+                  {{ u.Activo ? 'Activo' : 'Inactivo' }}
+                </span>
+              </td>
+              <td class="text-center acciones-tabla">
+                <button class="btn btn-sm btn-outline-primary btn-icon" (click)="seleccionarParaEditar(u)" title="Editar">
+                  <i class="mdi mdi-pencil"></i>
+                </button>
+                <button
+                  class="btn btn-sm btn-icon"
+                  [ngClass]="u.Activo ? 'btn-outline-danger' : 'btn-outline-success'"
+                  [title]="u.Activo ? 'Desactivar' : 'Activar'"
+                  (click)="alternarActivo(u)">
+                  <i class="mdi" [ngClass]="u.Activo ? 'mdi-account-off' : 'mdi-account-check'"></i>
+                </button>
+                <button
+                  *ngIf="esAdmin && u.Id !== usuarioActualId"
+                  class="btn btn-sm btn-outline-secondary btn-icon"
+                  title="Forzar cierre de sesión"
+                  (click)="forzarLogout(u)">
+                  <i class="mdi mdi-logout-variant"></i>
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="listaUsuarios.length === 0">
+              <td colspan="6" class="text-center text-muted py-3">No hay usuarios registrados.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODAL: CREAR / EDITAR USUARIO ===================== -->
+<div class="modal-backdrop-custom" *ngIf="mostrarModal" (click)="cerrarModal()"></div>
+<div class="modal-custom" *ngIf="mostrarModal" role="dialog" aria-modal="true">
+  <div class="modal-custom-dialog" style="max-width: 480px;">
+    <div class="card mb-0">
       <div class="card-body">
-        <h4 class="card-title">{{ modoEdicion ? '✏️ Editar Usuario' : '➕ Crear Nuevo Usuario' }}</h4>
+        <div class="d-flex justify-content-between align-items-start mb-3">
+          <h4 class="card-title mb-0">{{ modoEdicion ? '✏️ Editar usuario' : '➕ Nuevo usuario' }}</h4>
+          <button type="button" class="btn-close" aria-label="Cerrar" (click)="cerrarModal()"></button>
+        </div>
 
         <form (ngSubmit)="guardarUsuario()">
           <div class="mb-3">
             <label class="form-label">Nombre</label>
-            <input type="text" class="form-control" [(ngModel)]="usuarioForm.nombre" name="nombre" required>
+            <input type="text" class="form-control" [(ngModel)]="usuarioForm.nombre" name="nombre" required />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Usuario (para iniciar sesión)</label>
+            <input type="text" class="form-control" [(ngModel)]="usuarioForm.nombreUsuario" name="nombreUsuario"
+              [disabled]="modoEdicion" autocapitalize="none" placeholder="ej. juan.perez" required />
+            <small class="text-muted" *ngIf="modoEdicion">El usuario no se puede cambiar.</small>
           </div>
 
           <div class="mb-3">
             <label class="form-label">Correo</label>
-            <input type="email" class="form-control" [(ngModel)]="usuarioForm.correo" name="correo" [disabled]="modoEdicion" required>
+            <input type="email" class="form-control" [(ngModel)]="usuarioForm.correo" name="correo" required />
           </div>
 
           <div class="mb-3" *ngIf="!modoEdicion">
             <label class="form-label">Contraseña temporal</label>
-            <input type="password" class="form-control" [(ngModel)]="usuarioForm.contrasena" name="contrasena" required>
+            <input type="password" class="form-control" [(ngModel)]="usuarioForm.contrasena" name="contrasena" required />
           </div>
 
           <div class="mb-3">
@@ -28,57 +128,261 @@
             </select>
           </div>
 
-          <div class="d-grid gap-2">
+          <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" id="recibeAlertas"
+              [(ngModel)]="usuarioForm.recibeAlertasStock" name="recibeAlertasStock">
+            <label class="form-check-label" for="recibeAlertas">
+              Recibe alertas de stock bajo por correo
+            </label>
+          </div>
+
+          <div class="d-flex gap-2 justify-content-end">
+            <button type="button" class="btn btn-secondary" (click)="cerrarModal()">Cancelar</button>
             <button type="submit" class="btn btn-primary fw-bold">
-              {{ modoEdicion ? 'Guardar Cambios' : 'Crear Usuario' }}
-            </button>
-            <button type="button" class="btn btn-secondary" *ngIf="modoEdicion" (click)="resetFormulario()">
-              Cancelar
+              {{ modoEdicion ? 'Guardar cambios' : 'Crear usuario' }}
             </button>
           </div>
         </form>
       </div>
     </div>
   </div>
+</div>
 
-  <div class="col-lg-8">
+<!-- ========================= TAB ROLES Y PERMISOS ========================= -->
+<div class="row" *ngIf="tab === 'roles' && esAdmin">
+  <!-- Lista de roles -->
+  <div class="col-lg-4">
     <div class="card">
       <div class="card-body">
-        <h4 class="card-title">👥 Usuarios del Sistema</h4>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="card-title mb-0">🛡️ Roles</h4>
+          <button class="btn btn-sm btn-primary" (click)="nuevoRol()">
+            <i class="mdi mdi-plus"></i> Nuevo rol
+          </button>
+        </div>
 
-        <div class="table-responsive">
-          <table class="table table-hover align-middle">
-            <thead class="table-light">
-              <tr>
-                <th>Nombre</th>
-                <th>Correo</th>
-                <th>Rol</th>
-                <th>Estado</th>
-                <th class="text-center">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let u of listaUsuarios">
-                <td>{{ u.Nombre }}</td>
-                <td>{{ u.Correo }}</td>
-                <td><span class="badge bg-secondary">{{ u.RolNombre }}</span></td>
-                <td>
-                  <span class="badge" [ngClass]="u.Activo ? 'bg-success' : 'bg-danger'">
-                    {{ u.Activo ? 'Activo' : 'Inactivo' }}
-                  </span>
-                </td>
-                <td class="text-center">
-                  <button class="btn btn-sm btn-warning text-white me-2" (click)="seleccionarParaEditar(u)">Editar</button>
-                  <button class="btn btn-sm" [ngClass]="u.Activo ? 'btn-outline-danger' : 'btn-outline-success'" (click)="alternarActivo(u)">
-                    {{ u.Activo ? 'Desactivar' : 'Activar' }}
-                  </button>
-                </td>
-              </tr>
-              <tr *ngIf="listaUsuarios.length === 0">
-                <td colspan="5" class="text-center text-muted py-3">No hay usuarios registrados.</td>
-              </tr>
-            </tbody>
-          </table>
+        <div class="list-group">
+          <button
+            *ngFor="let rol of rolesDetalle"
+            type="button"
+            class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+            [class.active]="rolSeleccionado?.Id === rol.Id && !creandoRol"
+            (click)="seleccionarRol(rol)">
+            <span>
+              <i class="mdi" [ngClass]="rol.EsAdmin ? 'mdi-shield-crown' : 'mdi-shield-account'"></i>
+              {{ rol.Nombre }}
+              <i class="mdi mdi-lock text-muted" *ngIf="rol.EsAdmin" title="Protegido"></i>
+            </span>
+            <span class="badge text-bg-light">{{ rol.UsuariosCount }} usr</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Editor del rol -->
+  <div class="col-lg-8">
+    <div class="card" *ngIf="rolSeleccionado; else sinRol">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+          <div class="flex-grow-1 me-3">
+            <label class="form-label">Nombre del rol</label>
+            <input
+              type="text"
+              class="form-control"
+              [(ngModel)]="rolNombreEdit"
+              [disabled]="rolEsAdmin"
+              placeholder="Ej. Cajero, Bodeguero, Supervisor..." />
+          </div>
+          <div class="pt-4">
+            <button
+              class="btn btn-outline-danger btn-sm"
+              *ngIf="!creandoRol && !rolEsAdmin"
+              (click)="eliminarRol()">
+              <i class="mdi mdi-delete"></i> Eliminar
+            </button>
+          </div>
+        </div>
+
+        <div class="alert alert-warning py-2 small" *ngIf="rolEsAdmin">
+          <i class="mdi mdi-lock"></i> El rol <strong>Administrador</strong> tiene todos los permisos y no se puede
+          modificar ni eliminar.
+        </div>
+        <div class="alert alert-info py-2 small" *ngIf="!rolEsAdmin">
+          <i class="mdi mdi-information-outline"></i> Los cambios de permisos aplican cuando cada usuario vuelve a
+          iniciar sesión (o al forzar su cierre de sesión).
+        </div>
+
+        <!-- Matriz de permisos -->
+        <div class="permiso-grupo" *ngFor="let grupo of gruposPermisos">
+          <div class="permiso-grupo__head">
+            <div class="form-check mb-0">
+              <input
+                type="checkbox"
+                class="form-check-input"
+                [id]="'grp-' + grupo.clave"
+                [checked]="moduloTodos(grupo)"
+                [indeterminate]="moduloAlgunos(grupo)"
+                [disabled]="rolEsAdmin"
+                (change)="toggleModulo(grupo)" />
+              <label class="form-check-label fw-semibold" [for]="'grp-' + grupo.clave">{{ grupo.label }}</label>
+            </div>
+          </div>
+          <div class="permiso-grupo__acciones">
+            <div class="form-check" *ngFor="let p of grupo.permisos">
+              <input
+                type="checkbox"
+                class="form-check-input"
+                [id]="'p-' + p.id"
+                [checked]="tienePermiso(p.id)"
+                [disabled]="rolEsAdmin"
+                (change)="togglePermiso(p.id)" />
+              <label class="form-check-label" [for]="'p-' + p.id">{{ p.accionLabel }}</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="d-flex gap-2 mt-3" *ngIf="!rolEsAdmin">
+          <button class="btn btn-primary fw-bold" (click)="guardarRol()" [disabled]="guardandoRol">
+            {{ guardandoRol ? 'Guardando...' : (creandoRol ? 'Crear rol' : 'Guardar cambios') }}
+          </button>
+          <button class="btn btn-secondary" (click)="cancelarEdicionRol()">Cancelar</button>
+        </div>
+      </div>
+    </div>
+
+    <ng-template #sinRol>
+      <div class="card">
+        <div class="card-body text-center text-muted py-5">
+          <i class="mdi mdi-shield-key-outline" style="font-size: 2.5rem"></i>
+          <p class="mb-0 mt-2">Elige un rol de la lista o crea uno nuevo para configurar sus permisos.</p>
+        </div>
+      </div>
+    </ng-template>
+  </div>
+</div>
+
+<!-- ==================== TAB CONFIGURACIÓN DE CORREO ==================== -->
+<div class="row" *ngIf="tab === 'config' && esAdmin">
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-body">
+        <h4 class="card-title">📧 Configuración de correo (SMTP)</h4>
+        <p class="text-muted small">
+          Se guarda en la base de datos, no en el código. Se usa para las alertas de stock bajo y otros avisos.
+          Con Gmail: activa la verificación en 2 pasos y usa una <b>contraseña de aplicación</b>.
+        </p>
+
+        <div class="row">
+          <div class="col-md-8 mb-3">
+            <label class="form-label">Servidor (host)</label>
+            <input type="text" class="form-control" [(ngModel)]="configCorreo.host" name="host" placeholder="smtp.gmail.com" />
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Puerto</label>
+            <input type="number" class="form-control" [(ngModel)]="configCorreo.puerto" name="puerto" placeholder="587" />
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Usuario</label>
+            <input type="text" class="form-control" [(ngModel)]="configCorreo.usuario" name="cfgUsuario" autocapitalize="none" placeholder="tucorreo@gmail.com" />
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Contraseña</label>
+            <input type="password" class="form-control" [(ngModel)]="configCorreo.contrasena" name="cfgPass"
+              [placeholder]="configCorreo.tienePassword ? '•••• (sin cambios)' : 'contraseña de aplicación'" />
+          </div>
+          <div class="col-md-12 mb-3">
+            <label class="form-label">Remitente (opcional)</label>
+            <input type="text" class="form-control" [(ngModel)]="configCorreo.remitente" name="remitente" placeholder="Miscelánea POS <tucorreo@gmail.com>" />
+          </div>
+        </div>
+
+        <div class="form-check mb-3">
+          <input class="form-check-input" type="checkbox" id="cfgActivo" [(ngModel)]="configCorreo.activo" name="cfgActivo" />
+          <label class="form-check-label" for="cfgActivo">Envío de correo activo</label>
+        </div>
+
+        <button class="btn btn-primary fw-bold mb-4" (click)="guardarConfigCorreo()" [disabled]="guardandoConfig">
+          {{ guardandoConfig ? 'Guardando...' : 'Guardar configuración' }}
+        </button>
+
+        <hr />
+        <label class="form-label fw-semibold">Enviar correo de prueba a:</label>
+        <div class="input-group" style="max-width: 480px;">
+          <input type="email" class="form-control" [(ngModel)]="correoPrueba" name="correoPrueba" placeholder="destino@ejemplo.com" />
+          <button class="btn btn-outline-primary" (click)="probarCorreo()" [disabled]="probandoCorreo">
+            {{ probandoCorreo ? 'Enviando...' : 'Enviar prueba' }}
+          </button>
+        </div>
+        <small class="text-muted">Guarda primero los cambios antes de probar.</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== TAB MI EMPRESA ==================== -->
+<div class="row" *ngIf="tab === 'empresa' && esAdmin">
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-body">
+        <h4 class="card-title">🏢 Datos de la empresa</h4>
+        <p class="text-muted small">
+          Esta información aparece en los tickets de venta y en las órdenes de compra en PDF.
+          La razón social ({{ empresaForm.nombre }}) solo la puede cambiar un superadministrador.
+        </p>
+
+        <div class="row">
+          <div class="col-md-12 mb-3">
+            <label class="form-label">Nombre comercial</label>
+            <input type="text" class="form-control" [(ngModel)]="empresaForm.nombreComercial" name="empresaNombreComercial" placeholder="Ej: Raíces y Brillos" />
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">NIT</label>
+            <input type="text" class="form-control" [(ngModel)]="empresaForm.nit" name="empresaNit" placeholder="900.000.000-0" />
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Teléfono</label>
+            <input type="text" class="form-control" [(ngModel)]="empresaForm.telefono" name="empresaTelefono" placeholder="+57 300 000 0000" />
+          </div>
+          <div class="col-md-12 mb-3">
+            <label class="form-label">Dirección</label>
+            <input type="text" class="form-control" [(ngModel)]="empresaForm.direccion" name="empresaDireccion" placeholder="Calle 00 # 00 - 00, Ciudad" />
+          </div>
+        </div>
+
+        <button class="btn btn-primary fw-bold" (click)="guardarEmpresa()" [disabled]="guardandoEmpresa">
+          {{ guardandoEmpresa ? 'Guardando...' : 'Guardar datos de la empresa' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card">
+      <div class="card-body">
+        <h4 class="card-title">🖼️ Marca de la empresa</h4>
+        <p class="text-muted small">
+          Reemplazan "Miscelánea POS" y el ícono de tienda mientras trabajas en esta empresa
+          (sidebar, pestaña del navegador y tickets/órdenes en PDF).
+        </p>
+
+        <div class="mb-3">
+          <label class="form-label">Nombre de marca</label>
+          <input type="text" class="form-control" [(ngModel)]="empresaForm.nombreMarca" name="empresaNombreMarca" placeholder="Miscelánea POS" />
+        </div>
+
+        <label class="form-label d-block">Logo / ícono</label>
+        <div class="d-flex align-items-center gap-3">
+          <img *ngIf="tieneLogo" [src]="logoUrl" alt="" style="width: 56px; height: 56px; object-fit: cover; border-radius: 8px;" />
+          <div class="d-flex flex-column gap-2">
+            <label class="btn btn-outline-primary btn-sm mb-0">
+              <i class="mdi mdi-upload"></i> {{ subiendoLogo ? 'Subiendo...' : (tieneLogo ? 'Cambiar logo' : 'Subir logo') }}
+              <input type="file" accept="image/png,image/jpeg,image/webp" hidden (change)="subirLogo($event)" [disabled]="subiendoLogo" />
+            </label>
+            <button *ngIf="tieneLogo" class="btn btn-outline-danger btn-sm" (click)="eliminarLogo()">
+              <i class="mdi mdi-delete"></i> Quitar logo
+            </button>
+          </div>
         </div>
       </div>
     </div>

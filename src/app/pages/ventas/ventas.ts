@@ -66,7 +66,42 @@ export class Ventas {
     });
   }
 
+  // Muestra el ticket en una ventana de vista previa con un botón para
+  // imprimir — a diferencia del POS (que imprime directo al cobrar), aquí
+  // primero se revisa la factura y luego, si hace falta, se reimprime.
   verTicket(id: number) {
-    window.open(`/ticket/${id}`, '_blank');
+    this.miscelaneaService.descargarTicketImagen(id).subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const ventana = window.open('', '_blank');
+        if (!ventana) return;
+        ventana.document.write(`
+          <html>
+            <head>
+              <title>Ticket</title>
+              <style>
+                @page { size: 58mm auto; margin: 0; }
+                body { margin: 0; padding: 20px; text-align: center; background: #f0f0f0; font-family: sans-serif; }
+                img { width: 320px; max-width: 100%; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+                .btn-imprimir { margin-top: 16px; padding: 10px 28px; font-size: 15px; font-weight: bold;
+                  cursor: pointer; border: none; border-radius: 6px; background: #198754; color: #fff; }
+                .btn-imprimir:hover { background: #157347; }
+                @media print {
+                  body { padding: 0; background: #fff; }
+                  .btn-imprimir { display: none; }
+                  img { width: 48mm; box-shadow: none; }
+                }
+              </style>
+            </head>
+            <body>
+              <img src="${url}"><br>
+              <button class="btn-imprimir" onclick="window.print()">🖨️ Imprimir Ticket</button>
+            </body>
+          </html>
+        `);
+        ventana.document.close();
+      },
+      error: () => this.alertService.error('No se pudo generar el ticket.')
+    });
   }
 }

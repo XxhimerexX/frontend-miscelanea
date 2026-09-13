@@ -1,9 +1,9 @@
-import { AfterViewInit, ChangeDetectorRef, Component, HostListener } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, OnInit } from '@angular/core';
 import { MiscelaneaService } from '../../services/miscelanea-service';
 import { AuthService } from '../../services/auht-services';
 import { AlertService } from '../../services/alert-service';
-
-declare var $: any;
+import { LayoutService } from '../../services/layout-service';
+import { EmpresaService } from '../../services/empresa-service';
 
 @Component({
   selector: 'app-sidebar',
@@ -11,7 +11,7 @@ declare var $: any;
   templateUrl: './sidebar.html',
   styleUrl: './sidebar.css',
 })
-export class Sidebar implements AfterViewInit {
+export class Sidebar implements OnInit {
   cajaAbierta: boolean = false;
   turnoActual: any = null;
   mostrarPanelCierre: boolean = false;
@@ -26,14 +26,25 @@ export class Sidebar implements AfterViewInit {
 
   menuVisible: any[] = [];
 
+  // --- Branding (nombre e ícono de la empresa activa, moldeables desde "Mi empresa") ---
+  nombreMarca: string | null = null;
+  logoUrl: string | null = null;
+
   constructor(
     private miscelaneaService: MiscelaneaService,
     private cdr: ChangeDetectorRef,
     public authService: AuthService,
-    private alertService: AlertService
+    public layout: LayoutService,
+    private alertService: AlertService,
+    private empresaService: EmpresaService
   ) {}
 
   ngOnInit(): void {
+    this.empresaService.brandingActualizada$.subscribe(() => this.cargarBranding());
+
+    if (this.modoSuperAdminSinEmpresa) return;
+
+    this.cargarBranding();
     this.miscelaneaService.cajaAbierta$.subscribe((abierta) => {
       this.cajaAbierta = abierta;
       this.cdr.detectChanges();
@@ -46,6 +57,23 @@ export class Sidebar implements AfterViewInit {
     this.construirMenu();
   }
 
+  private cargarBranding(): void {
+    this.empresaService.obtenerActual().subscribe({
+      next: (empresa) => {
+        this.nombreMarca = empresa?.NombreMarca || null;
+        this.logoUrl = empresa?.TieneLogo ? this.empresaService.logoUrl() : null;
+        this.cdr.detectChanges();
+      },
+      error: () => {},
+    });
+  }
+
+  // Un superadministrador que aún no ha entrado a ninguna empresa no tiene
+  // caja, turno ni menú de negocio: solo puede administrar empresas.
+  get modoSuperAdminSinEmpresa(): boolean {
+    return this.authService.esSuperAdmin() && !this.authService.empresaActual();
+  }
+
     construirMenu(): void {
     this.miscelaneaService.obtenerMenu().subscribe({
       next: (items) => {
@@ -54,15 +82,6 @@ export class Sidebar implements AfterViewInit {
       },
       error: (err) => console.error('Error al cargar el menú', err)
     });
-  }
-
-  // El plugin jQuery que despliega el submenú (AdminMenu, en sidebarmenu.js) se ejecuta
-  // normalmente una sola vez en el "document ready" global (custom.js). Como el sidebar
-  // se crea recién después del login (sin recargar la página), ese init global ya pasó
-  // y nunca engancha los elementos de este componente. Por eso se reinicializa aquí,
-  // cada vez que el DOM del sidebar realmente existe.
-  ngAfterViewInit(): void {
-    $('#sidebarnav').AdminMenu();
   }
 
   // Muestra la advertencia nativa del navegador si intenta cerrar la pestaña con caja abierta

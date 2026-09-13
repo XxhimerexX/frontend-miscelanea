@@ -43,6 +43,35 @@ export class MiscelaneaService {
     return this.http.delete<any>(`${this.apiUrl}/productos/${id}`);
   }
 
+  // Inventario en Excel
+  descargarInventarioExcel(): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/productos/exportar/excel`, { responseType: 'blob' });
+  }
+  enviarInventarioExcel(para: string): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/productos/exportar/excel/enviar`, { para });
+  }
+
+  // --- IMAGEN DE PRODUCTO ---
+
+  // Sube/reemplaza la imagen (ya reescalada en el navegador). `imagen` es un Blob/File.
+  subirImagenProducto(id: number, imagen: Blob): Observable<any> {
+    const fd = new FormData();
+    fd.append('imagen', imagen, 'producto.jpg');
+    return this.http.post<any>(`${this.apiUrl}/productos/${id}/imagen`, fd);
+  }
+
+  eliminarImagenProducto(id: number): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/productos/${id}/imagen`);
+  }
+
+  // URL directa para usar en <img src>. Lleva el token en la query porque
+  // <img> no puede mandar cabeceras. `v` fuerza recarga tras cambiar la imagen.
+  urlImagenProducto(id: number, version?: number | string): string {
+    const token = localStorage.getItem('token') || '';
+    const v = version != null ? `&v=${version}` : '';
+    return `${this.apiUrl}/productos/${id}/imagen?token=${encodeURIComponent(token)}${v}`;
+  }
+
   // --- VENTAS ---
 
   // Registrar una nueva venta (procesar carrito y descontar stock)
@@ -58,6 +87,43 @@ export class MiscelaneaService {
   // Obtener la lista de categorías para el select del inventario
   obtenerCategorias(): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/categorias`);
+  }
+  crearCategoria(nombre: string): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/categorias`, { nombre });
+  }
+
+  // --- CONFIGURACIÓN DE CORREO (solo admin) ---
+  obtenerConfigCorreo(): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/configuracion/correo`);
+  }
+  guardarConfigCorreo(datos: any): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/configuracion/correo`, datos);
+  }
+  probarConfigCorreo(para: string): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/configuracion/correo/probar`, { para });
+  }
+  actualizarCategoria(id: number, nombre: string): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/categorias/${id}`, { nombre });
+  }
+  eliminarCategoria(id: number): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/categorias/${id}`);
+  }
+
+  // --- DESCUENTOS / OFERTAS ---
+  listarDescuentos(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/descuentos`);
+  }
+  descuentosVigentes(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/descuentos/vigentes`);
+  }
+  crearDescuento(datos: any): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/descuentos`, datos);
+  }
+  actualizarDescuento(id: number, datos: any): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/descuentos/${id}`, datos);
+  }
+  eliminarDescuento(id: number): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/descuentos/${id}`);
   }
 
   // Obtener una venta específica por su ID junto con sus ítems y productos
@@ -157,6 +223,17 @@ export class MiscelaneaService {
   obtenerReporteBajaRotacion(dias: number): Observable<any> {
     const params = { dias: String(dias) };
     return this.http.get<any>(`${this.apiUrl}/reportes/baja-rotacion`, { params });
+  }
+
+  // --- Reportes de administración (genéricos + Excel) ---
+  listarReportesAdmin(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/reportes/admin`);
+  }
+  obtenerReporteAdmin(tipo: string, params: Record<string, string>): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/reportes/admin/${tipo}`, { params });
+  }
+  descargarReporteAdminExcel(tipo: string, params: Record<string, string>): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/reportes/admin/${tipo}/excel`, { params, responseType: 'blob' });
   }
 
   // --- MENÚ ---
@@ -275,6 +352,44 @@ descargarDocumentoProveedor(documentoId: number): Observable<Blob> {
  
 eliminarDocumentoProveedor(documentoId: number): Observable<any> {
   return this.http.delete(`${this.apiUrl}/proveedores/documentos/${documentoId}`);
+}
+
+// --- Tipos de documento de proveedor (catálogo editable) ---
+listarTiposDocumentoProveedor(soloActivos: boolean = false): Observable<any[]> {
+  return this.http.get<any[]>(`${this.apiUrl}/proveedores/tipos-documento${soloActivos ? '?activos=true' : ''}`);
+}
+crearTipoDocumentoProveedor(nombre: string): Observable<any> {
+  return this.http.post(`${this.apiUrl}/proveedores/tipos-documento`, { nombre });
+}
+actualizarTipoDocumentoProveedor(id: number, datos: { nombre: string; activo: boolean }): Observable<any> {
+  return this.http.put(`${this.apiUrl}/proveedores/tipos-documento/${id}`, datos);
+}
+eliminarTipoDocumentoProveedor(id: number): Observable<any> {
+  return this.http.delete(`${this.apiUrl}/proveedores/tipos-documento/${id}`);
+}
+
+obtenerClientes(soloActivos: boolean = false): Observable<any[]> {
+  return this.http.get<any[]>(`${this.apiUrl}/clientes${soloActivos ? '?activos=true' : ''}`);
+}
+ 
+obtenerClientePorId(id: number): Observable<any> {
+  return this.http.get(`${this.apiUrl}/clientes/${id}`);
+}
+ 
+registrarCliente(datos: any): Observable<any> {
+  return this.http.post(`${this.apiUrl}/clientes`, datos);
+}
+ 
+actualizarCliente(id: number, datos: any): Observable<any> {
+  return this.http.put(`${this.apiUrl}/clientes/${id}`, datos);
+}
+ 
+cambiarEstadoCliente(id: number, activo: boolean): Observable<any> {
+  return this.http.patch(`${this.apiUrl}/clientes/${id}/estado`, { activo });
+}
+
+descargarTicketImagen(id: number): Observable<Blob> {
+  return this.http.get(`${this.apiUrl}/ventas/${id}/ticket-imagen`, { responseType: 'blob' });
 }
 
 }

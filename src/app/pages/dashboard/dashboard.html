@@ -2,74 +2,193 @@
   <div class="col-md-6 align-self-center">
     <h3 class="text-themecolor">Panel de Control</h3>
   </div>
+  <div class="col-md-6 align-self-center text-md-end">
+    <span class="badge fs-6" [ngClass]="cajaAbierta ? 'text-bg-success' : 'text-bg-danger'">
+      Caja {{ cajaAbierta ? 'abierta' : 'cerrada' }}
+    </span>
+  </div>
 </div>
 
-<!-- Tarjetas KPI -->
-<div class="row">
-  <div class="col-lg-4">
-    <div class="card">
-      <div class="card-body">
-        <div class="d-flex no-block">
-          <div class="m-r-20 align-self-center"><span class="lstick m-r-20"></span><img src="assets/images/icon/income.png" alt="Ventas" /></div>
-          <div class="align-self-center">
-            <h6 class="text-muted m-t-10 m-b-0">Ventas del Día</h6>
-            <h2 class="m-t-0">${{ totalVentasDia | number }}</h2>
-          </div>
-        </div>
-      </div>
+<!-- ===================== ACCESOS DIRECTOS ===================== -->
+<div class="card">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h4 class="card-title mb-0"><span class="lstick"></span>Accesos directos</h4>
+      <button class="btn btn-sm btn-outline-secondary" (click)="abrirModalAccesos()">
+        <i class="mdi mdi-cog-outline"></i> Personalizar
+      </button>
     </div>
-  </div>
-
-  <div class="col-lg-4">
-    <div class="card">
-      <div class="card-body">
-        <div class="d-flex no-block">
-          <div class="m-r-20 align-self-center"><span class="lstick m-r-20"></span><img [src]="cajaAbierta ? 'assets/images/icon/assets.png' : 'assets/images/icon/expense.png'" alt="Caja" /></div>
-          <div class="align-self-center">
-            <h6 class="text-muted m-t-10 m-b-0">Estado de Caja</h6>
-            <h2 class="m-t-0" [ngClass]="cajaAbierta ? 'text-success' : 'text-danger'">
-              {{ cajaAbierta ? 'Abierta' : 'Cerrada' }}
-            </h2>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="col-lg-4">
-    <div class="card">
-      <div class="card-body">
-        <div class="d-flex no-block">
-          <div class="m-r-20 align-self-center"><span class="lstick m-r-20"></span><img src="assets/images/icon/staff.png" alt="Stock" /></div>
-          <div class="align-self-center">
-            <h6 class="text-muted m-t-10 m-b-0">Productos con Stock Bajo</h6>
-            <h2 class="m-t-0" [ngClass]="productosStockBajo > 0 ? 'text-danger' : ''">{{ productosStockBajo }}</h2>
-          </div>
-        </div>
+    <div class="dash-accesos">
+      <a *ngFor="let acc of accesos" class="dash-acceso" [routerLink]="'/' + acc.Ruta">
+        <i [ngClass]="acc.Icono || 'mdi mdi-arrow-right-bold'"></i>
+        <span>{{ acc.Etiqueta }}</span>
+      </a>
+      <div class="text-muted small" *ngIf="accesos.length === 0">
+        No tienes accesos configurados. Usa "Personalizar" para elegirlos.
       </div>
     </div>
   </div>
 </div>
 
-<!-- Gráfica de ventas -->
+<!-- ===================== KPIs ===================== -->
 <div class="row">
-  <div class="col-md-12">
-    <div class="card">
+  <div class="col-6 col-lg-3 mb-3">
+    <div class="card h-100"><div class="card-body">
+      <h6 class="text-muted mb-1">Ventas de hoy</h6>
+      <h3 class="mb-0">${{ kpis.ventasHoy | number }}</h3>
+      <small class="text-muted">{{ kpis.facturasHoy }} factura(s)</small>
+    </div></div>
+  </div>
+  <div class="col-6 col-lg-3 mb-3">
+    <div class="card h-100"><div class="card-body">
+      <h6 class="text-muted mb-1">Ticket promedio hoy</h6>
+      <h3 class="mb-0">${{ kpis.ticketPromedioHoy | number }}</h3>
+    </div></div>
+  </div>
+  <div class="col-6 col-lg-3 mb-3">
+    <div class="card h-100"><div class="card-body">
+      <h6 class="text-muted mb-1">Ventas del mes</h6>
+      <h3 class="mb-0">${{ kpis.ventasMes | number }}</h3>
+      <small class="text-success">Utilidad: ${{ kpis.utilidadMes | number }}</small>
+    </div></div>
+  </div>
+  <div class="col-6 col-lg-3 mb-3">
+    <div class="card h-100"><div class="card-body">
+      <h6 class="text-muted mb-1">Productos con stock bajo</h6>
+      <h3 class="mb-0" [ngClass]="productosStockBajoCount > 0 ? 'text-danger' : ''">{{ productosStockBajoCount }}</h3>
+    </div></div>
+  </div>
+</div>
+
+<!-- ===================== GRÁFICA ===================== -->
+<div class="card">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-center">
+      <h4 class="card-title mb-0"><span class="lstick"></span>Comportamiento de ventas</h4>
+      <select class="form-select" style="width: auto;" [(ngModel)]="filtroPeriodo" (change)="cambiarFiltroPeriodo()">
+        <option value="dia">Por día</option>
+        <option value="mes">Por mes</option>
+        <option value="anio">Por año</option>
+      </select>
+    </div>
+    <div style="position: relative; height: 320px; width: 100%;">
+      <canvas id="ventasChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== LISTAS ===================== -->
+<div class="row">
+  <div class="col-lg-4 mb-3">
+    <div class="card h-100"><div class="card-body">
+      <h4 class="card-title"><span class="lstick"></span>Más vendidos del mes</h4>
+      <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+          <tbody>
+            <tr *ngFor="let p of topProductos">
+              <td>{{ p.Nombre }}</td>
+              <td class="text-end text-nowrap">{{ p.Unidades }} u.</td>
+              <td class="text-end text-nowrap fw-semibold">${{ p.Total | number }}</td>
+            </tr>
+            <tr *ngIf="topProductos.length === 0"><td class="text-muted py-3">Sin ventas este mes.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="col-lg-4 mb-3">
+    <div class="card h-100"><div class="card-body">
+      <div class="d-flex justify-content-between align-items-center">
+        <h4 class="card-title mb-0"><span class="lstick"></span>Stock bajo</h4>
+        <a routerLink="/inventario" class="small">Ver inventario</a>
+      </div>
+      <div class="table-responsive mt-2">
+        <table class="table table-sm align-middle mb-0">
+          <tbody>
+            <tr *ngFor="let s of stockBajo">
+              <td>{{ s.Nombre }}</td>
+              <td class="text-end">
+                <span class="badge" [ngClass]="s.Stock <= 0 ? 'text-bg-danger' : 'text-bg-warning'">
+                  {{ s.Stock }} / mín {{ s.StockMinimo }}
+                </span>
+              </td>
+            </tr>
+            <tr *ngIf="stockBajo.length === 0"><td class="text-muted py-3">Todo con stock suficiente. 👍</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="col-lg-4 mb-3">
+    <div class="card h-100"><div class="card-body">
+      <h4 class="card-title"><span class="lstick"></span>Cobros de hoy</h4>
+      <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+          <tbody>
+            <tr *ngFor="let m of metodosHoy">
+              <td>{{ m.MetodoPago }}</td>
+              <td class="text-end fw-semibold">${{ m.Total | number }}</td>
+            </tr>
+            <tr *ngIf="metodosHoy.length === 0"><td class="text-muted py-3">Aún no hay ventas hoy.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div></div>
+  </div>
+</div>
+
+<!-- ===================== ÚLTIMAS VENTAS ===================== -->
+<div class="card">
+  <div class="card-body">
+    <h4 class="card-title"><span class="lstick"></span>Últimas ventas</h4>
+    <div class="table-responsive">
+      <table class="table table-sm table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Factura</th><th>Cliente</th><th>Pago</th><th>Fecha</th><th class="text-end">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let v of ultimasVentas">
+            <td><code class="small">{{ v.NumeroFactura }}</code></td>
+            <td>{{ v.Cliente }}</td>
+            <td>{{ v.MetodoPago }}</td>
+            <td class="text-nowrap">{{ v.FechaVenta | date: 'short' }}</td>
+            <td class="text-end fw-semibold">${{ v.Total | number }}</td>
+          </tr>
+          <tr *ngIf="ultimasVentas.length === 0"><td colspan="5" class="text-muted py-3">Sin ventas registradas.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODAL: PERSONALIZAR ACCESOS ===================== -->
+<div class="modal-backdrop-custom" *ngIf="mostrarModalAccesos" (click)="mostrarModalAccesos = false"></div>
+<div class="modal-custom" *ngIf="mostrarModalAccesos" role="dialog" aria-modal="true">
+  <div class="modal-custom-dialog" style="max-width: 460px;">
+    <div class="card mb-0">
       <div class="card-body">
-        <div class="d-flex">
-          <div>
-            <h4 class="card-title"><span class="lstick"></span>Comportamiento de Ventas</h4>
-          </div>
-          <div class="ml-auto">
-            <select class="custom-select b-0" [(ngModel)]="filtroPeriodo" (change)="cambiarFiltroPeriodo()">
-              <option value="dia">Por Día</option>
-              <option value="mes" selected>Por Mes</option>
-              <option value="anio">Por Año</option>
-            </select>
-          </div>
+        <div class="d-flex justify-content-between align-items-start mb-3">
+          <h4 class="card-title mb-0">Accesos directos del panel</h4>
+          <button type="button" class="btn-close" aria-label="Cerrar" (click)="mostrarModalAccesos = false"></button>
         </div>
-        <div style="position: relative; height: 350px; width: 100%;">
-          <canvas id="ventasChart"></canvas>
+        <p class="text-muted small">Elige qué secciones aparecen como botón rápido en tu panel.</p>
+
+        <div class="list-group mb-3">
+          <label class="list-group-item d-flex align-items-center gap-2" *ngFor="let m of menuDisponible">
+            <input class="form-check-input m-0" type="checkbox"
+              [checked]="accesosSel.has(m.Ruta)" (change)="toggleAcceso(m.Ruta)" />
+            <i [ngClass]="m.Icono || 'mdi mdi-circle-small'"></i>
+            <span>{{ m.Etiqueta }}</span>
+          </label>
+        </div>
+
+        <div class="d-flex gap-2 justify-content-end">
+          <button class="btn btn-secondary" (click)="mostrarModalAccesos = false">Cancelar</button>
+          <button class="btn btn-primary fw-bold" (click)="guardarAccesos()">Guardar</button>
         </div>
       </div>
     </div>

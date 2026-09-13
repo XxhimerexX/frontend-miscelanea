@@ -1,0 +1,48 @@
+:host {
+  display: block;
+}
+
+/* Accesos directos */
+.dash-accesos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.6rem;
+}
+
+.dash-acceso {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 1rem 0.5rem;
+  border: 1px solid var(--mp-border, #e6e8ef);
+  border-radius: var(--mp-radius, 0.75rem);
+  background: var(--mp-surface, #fff);
+  color: var(--mp-text, #1f2430);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-align: center;
+  transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
+}
+
+.dash-acceso:hover {
+  transform: translateY(-2px);
+  border-color: var(--mp-primary, #4f46e5);
+  box-shadow: var(--mp-shadow, 0 4px 12px rgba(16, 24, 40, 0.08));
+  color: var(--mp-primary, #4f46e5);
+}
+
+.dash-acceso i {
+  font-size: 1.8rem;
+  line-height: 1;
+  color: var(--mp-primary, #4f46e5);
+}
+
+.list-group-item {
+  background: var(--mp-surface, #fff);
+  border-color: var(--mp-border, #e6e8ef);
+  color: var(--mp-text, #1f2430);
+  cursor: pointer;
+}

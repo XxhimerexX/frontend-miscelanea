@@ -1,194 +1,287 @@
-<div class="row">
-    <!-- Columna Izquierda: Formulario -->
-    <div class="col-lg-4">
-        <div class="card">
-            <div class="card-body">
-                <h4 class="card-title">
-                    {{ modoEdicion ? '✏️ Actualizar Proveedor' : '➕ Registrar Nuevo Proveedor' }}
-                </h4>
-                <h6 class="card-subtitle text-muted mb-3">Datos del proveedor</h6>
+<!-- Pestañas -->
+<ul class="nav nav-tabs mb-3">
+  <li class="nav-item">
+    <button class="nav-link" [class.active]="tab === 'proveedores'" (click)="tab = 'proveedores'">
+      <i class="mdi mdi-truck"></i> Proveedores
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" [class.active]="tab === 'tipos'" (click)="tab = 'tipos'">
+      <i class="mdi mdi-file-cog-outline"></i> Tipos de documento
+    </button>
+  </li>
+</ul>
 
-                <form (ngSubmit)="guardarProveedor()">
-                    <div class="mb-3">
-                        <label class="form-label">Razón Social *</label>
-                        <input type="text" class="form-control" [(ngModel)]="proveedorForm.RazonSocial"
-                            name="RazonSocial" placeholder="Ej. Distribuidora ABC S.A.S" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">NIT *</label>
-                        <input type="text" class="form-control" [(ngModel)]="proveedorForm.NIT" name="NIT"
-                            placeholder="Ej. 900123456-1" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Teléfono</label>
-                        <input type="text" class="form-control" [(ngModel)]="proveedorForm.Telefono" name="Telefono">
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Correo</label>
-                        <input type="email" class="form-control" [(ngModel)]="proveedorForm.Correo" name="Correo">
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Dirección</label>
-                        <input type="text" class="form-control" [(ngModel)]="proveedorForm.Direccion" name="Direccion">
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Contacto</label>
-                        <input type="text" class="form-control" [(ngModel)]="proveedorForm.Contacto" name="Contacto"
-                            placeholder="Nombre de la persona de contacto">
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Productos que vende este proveedor</label>
-                        <div class="border rounded p-2" style="max-height: 220px; overflow-y: auto;">
-                            <div class="form-check" *ngFor="let prod of listaProductos">
-                                <input class="form-check-input" type="checkbox" [id]="'prod-' + prod.Id"
-                                    [checked]="productosSeleccionados.has(prod.Id)" (change)="toggleProducto(prod.Id)">
-                                <label class="form-check-label small" [for]="'prod-' + prod.Id">
-                                    {{ prod.Nombre }}
-                                </label>
-                            </div>
-                            <p class="text-muted small mb-0" *ngIf="listaProductos.length === 0">No hay productos en el inventario.</p>
-                        </div>
-                        <small class="text-muted">Se usa en Compras para filtrar el catálogo por proveedor.</small>
-                    </div>
-
-                    <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-primary fw-bold">
-                            {{ modoEdicion ? 'Actualizar Cambios' : 'Guardar Proveedor' }}
-                        </button>
-                        <button type="button" class="btn btn-secondary" *ngIf="modoEdicion" (click)="resetFormulario()">
-                            Cancelar Edición
-                        </button>
-                    </div>
-                </form>
-            </div>
+<!-- ======================= TAB PROVEEDORES ======================= -->
+<div *ngIf="tab === 'proveedores'">
+  <div class="card">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+          <h4 class="card-title mb-0">🚚 Proveedores</h4>
+          <h6 class="card-subtitle text-muted">Listado sincronizado con la base de datos</h6>
         </div>
-    </div>
+        <button class="btn btn-primary fw-bold" (click)="abrirModalNuevo()">
+          <i class="mdi mdi-plus"></i> Nuevo proveedor
+        </button>
+      </div>
 
-    <!-- Columna Derecha: Listado de Proveedores -->
-    <div class="col-lg-8">
-        <div class="card">
-            <div class="card-body">
-                <h4 class="card-title">🚚 Proveedores</h4>
-                <h6 class="card-subtitle text-muted mb-3">Listado sincronizado con la base de datos</h6>
-
-                <div class="table-responsive" style="max-height: 550px; overflow-y: auto;">
-                    <table class="table table-hover align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Razón Social</th>
-                                <th>NIT</th>
-                                <th>Teléfono</th>
-                                <th>Contacto</th>
-                                <th>Estado</th>
-                                <th class="text-center">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr *ngFor="let prov of listaProveedores" [ngClass]="{'table-secondary text-muted': !prov.Activo}">
-                                <td>
-                                    <h6 class="mb-0 fw-bold">{{ prov.RazonSocial }}</h6>
-                                    <small class="text-muted">{{ prov.Correo }}</small>
-                                </td>
-                                <td>{{ prov.NIT }}</td>
-                                <td>{{ prov.Telefono || '—' }}</td>
-                                <td>{{ prov.Contacto || '—' }}</td>
-                                <td>
-                                    <span [ngClass]="prov.Activo ? 'badge bg-success' : 'badge bg-secondary'">
-                                        {{ prov.Activo ? 'Activo' : 'Inactivo' }}
-                                    </span>
-                                </td>
-                                <td class="text-center">
-                                    <button class="btn btn-sm btn-outline-dark me-2" (click)="abrirModalDocumentos(prov)" title="Documentos">
-                                        📄 Documentos
-                                    </button>
-                                    <button class="btn btn-sm btn-warning me-2 text-white"
-                                        (click)="seleccionarParaEditar(prov)" title="Editar">
-                                        Editar
-                                    </button>
-                                    <button class="btn btn-sm" [ngClass]="prov.Activo ? 'btn-danger' : 'btn-success'"
-                                        (click)="cambiarEstado(prov)" [title]="prov.Activo ? 'Desactivar' : 'Activar'">
-                                        {{ prov.Activo ? 'Desactivar' : 'Activar' }}
-                                    </button>
-                                </td>
-                            </tr>
-                            <tr *ngIf="listaProveedores.length === 0">
-                                <td colspan="6" class="text-center text-muted py-4">No hay proveedores registrados.</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead>
+            <tr>
+              <th>Razón social</th>
+              <th>NIT</th>
+              <th>Teléfono</th>
+              <th>Contacto</th>
+              <th>Estado</th>
+              <th class="text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let prov of listaProveedores" [ngClass]="{ 'text-muted': !prov.Activo }">
+              <td>
+                <span class="fw-semibold d-block">{{ prov.RazonSocial }}</span>
+                <small class="text-muted">{{ prov.Correo }}</small>
+              </td>
+              <td>{{ prov.NIT }}</td>
+              <td>{{ prov.Telefono || '—' }}</td>
+              <td>{{ prov.Contacto || '—' }}</td>
+              <td>
+                <span [ngClass]="prov.Activo ? 'badge text-bg-success' : 'badge text-bg-secondary'">
+                  {{ prov.Activo ? 'Activo' : 'Inactivo' }}
+                </span>
+              </td>
+              <td class="text-center acciones-tabla">
+                <button class="btn btn-sm btn-outline-secondary btn-icon" (click)="abrirModalDocumentos(prov)" title="Documentos">
+                  <i class="mdi mdi-file-document-multiple-outline"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-primary btn-icon" (click)="seleccionarParaEditar(prov)" title="Editar">
+                  <i class="mdi mdi-pencil"></i>
+                </button>
+                <button
+                  class="btn btn-sm btn-icon"
+                  [ngClass]="prov.Activo ? 'btn-outline-danger' : 'btn-outline-success'"
+                  [title]="prov.Activo ? 'Desactivar' : 'Activar'"
+                  (click)="cambiarEstado(prov)">
+                  <i class="mdi" [ngClass]="prov.Activo ? 'mdi-close-circle-outline' : 'mdi-check-circle-outline'"></i>
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="listaProveedores.length === 0">
+              <td colspan="6" class="text-center text-muted py-4">No hay proveedores registrados.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
+  </div>
 </div>
 
-<!-- ============================= MODAL: DOCUMENTOS DEL PROVEEDOR ============================= -->
+<!-- ==================== TAB TIPOS DE DOCUMENTO ==================== -->
+<div class="row" *ngIf="tab === 'tipos'">
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-body">
+        <h4 class="card-title">📂 Tipos de documento de proveedor</h4>
+        <p class="text-muted small">
+          Estas categorías aparecen al subir documentos de un proveedor. Desactiva un tipo para ocultarlo sin perder
+          los documentos que ya lo usan.
+        </p>
+
+        <div class="input-group mb-3" style="max-width: 420px;">
+          <input
+            type="text"
+            class="form-control"
+            placeholder="Nombre del nuevo tipo (ej. Certificación bancaria)"
+            [(ngModel)]="nuevoTipoNombre"
+            (keyup.enter)="crearTipo()" />
+          <button class="btn btn-primary" (click)="crearTipo()" [disabled]="guardandoTipo">Añadir</button>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Código</th>
+                <th>En uso</th>
+                <th>Estado</th>
+                <th class="text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let t of tiposDocumentoTodos">
+                <td class="fw-semibold">{{ t.Nombre }}</td>
+                <td><code class="small">{{ t.Codigo }}</code></td>
+                <td>{{ t.EnUso }}</td>
+                <td>
+                  <span [ngClass]="t.Activo ? 'badge text-bg-success' : 'badge text-bg-secondary'">
+                    {{ t.Activo ? 'Activo' : 'Inactivo' }}
+                  </span>
+                </td>
+                <td class="text-center acciones-tabla">
+                  <button class="btn btn-sm btn-outline-primary btn-icon" (click)="renombrarTipo(t)" title="Renombrar">
+                    <i class="mdi mdi-pencil"></i>
+                  </button>
+                  <button
+                    class="btn btn-sm btn-icon"
+                    [ngClass]="t.Activo ? 'btn-outline-secondary' : 'btn-outline-success'"
+                    [title]="t.Activo ? 'Desactivar' : 'Activar'"
+                    (click)="toggleActivoTipo(t)">
+                    <i class="mdi" [ngClass]="t.Activo ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"></i>
+                  </button>
+                  <button
+                    class="btn btn-sm btn-outline-danger btn-icon"
+                    [disabled]="t.EnUso > 0"
+                    [title]="t.EnUso > 0 ? 'Está en uso; desactívalo' : 'Eliminar'"
+                    (click)="eliminarTipo(t)">
+                    <i class="mdi mdi-delete"></i>
+                  </button>
+                </td>
+              </tr>
+              <tr *ngIf="tiposDocumentoTodos.length === 0">
+                <td colspan="5" class="text-center text-muted py-3">No hay tipos de documento.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= MODAL: CREAR / EDITAR PROVEEDOR ================= -->
+<div class="modal-backdrop-custom" *ngIf="mostrarModal" (click)="cerrarModal()"></div>
+<div class="modal-custom" *ngIf="mostrarModal" role="dialog" aria-modal="true">
+  <div class="modal-custom-dialog">
+    <div class="card mb-0">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+          <h4 class="card-title mb-0">{{ modoEdicion ? '✏️ Actualizar proveedor' : '➕ Nuevo proveedor' }}</h4>
+          <button type="button" class="btn-close" aria-label="Cerrar" (click)="cerrarModal()"></button>
+        </div>
+
+        <form (ngSubmit)="guardarProveedor()">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Razón social *</label>
+              <input type="text" class="form-control" [(ngModel)]="proveedorForm.RazonSocial" name="RazonSocial" required />
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">NIT *</label>
+              <input type="text" class="form-control" [(ngModel)]="proveedorForm.NIT" name="NIT" required />
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Teléfono</label>
+              <input type="text" class="form-control" [(ngModel)]="proveedorForm.Telefono" name="Telefono" />
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Correo</label>
+              <input type="email" class="form-control" [(ngModel)]="proveedorForm.Correo" name="Correo" />
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Dirección</label>
+              <input type="text" class="form-control" [(ngModel)]="proveedorForm.Direccion" name="Direccion" />
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Contacto</label>
+              <input type="text" class="form-control" [(ngModel)]="proveedorForm.Contacto" name="Contacto" />
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Productos que vende este proveedor</label>
+            <div class="border rounded p-2" style="max-height: 220px; overflow-y: auto;">
+              <div class="form-check" *ngFor="let prod of listaProductos">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  [id]="'prod-' + prod.Id"
+                  [checked]="productosSeleccionados.has(prod.Id)"
+                  (change)="toggleProducto(prod.Id)" />
+                <label class="form-check-label small" [for]="'prod-' + prod.Id">{{ prod.Nombre }}</label>
+              </div>
+              <p class="text-muted small mb-0" *ngIf="listaProductos.length === 0">No hay productos en el inventario.</p>
+            </div>
+            <small class="text-muted">Se usa en Compras para filtrar el catálogo por proveedor.</small>
+          </div>
+
+          <div class="d-flex gap-2 justify-content-end">
+            <button type="button" class="btn btn-secondary" (click)="cerrarModal()">Cancelar</button>
+            <button type="submit" class="btn btn-primary fw-bold">
+              {{ modoEdicion ? 'Actualizar' : 'Guardar proveedor' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= MODAL: DOCUMENTOS DEL PROVEEDOR ================= -->
 <div class="modal-backdrop-custom" *ngIf="mostrarModalDocumentos" (click)="cerrarModalDocumentos()"></div>
 <div class="modal-custom" *ngIf="mostrarModalDocumentos" role="dialog" aria-modal="true">
-    <div class="modal-custom-dialog">
-        <div class="card mb-0">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <div>
-                        <h4 class="card-title mb-0">📄 Documentos de {{ proveedorDocumentos?.RazonSocial }}</h4>
-                        <h6 class="card-subtitle text-muted">RUT, Cámara de Comercio, lista de precios y otros</h6>
-                    </div>
-                    <button type="button" class="btn-close" aria-label="Cerrar" (click)="cerrarModalDocumentos()"></button>
-                </div>
-
-                <div class="row g-2 align-items-end mb-3 p-2 bg-light rounded border">
-                    <div class="col-md-4">
-                        <label class="form-label small fw-bold">Tipo de documento</label>
-                        <select class="form-select form-select-sm" [(ngModel)]="tipoDocumentoSeleccionado" name="tipoDocumento">
-                            <option *ngFor="let tipo of tiposDocumento" [value]="tipo.valor">{{ tipo.etiqueta }}</option>
-                        </select>
-                    </div>
-                    <div class="col-md-5">
-                        <label class="form-label small fw-bold">Archivo (PDF, XLS, XLSX — máx. 10 MB)</label>
-                        <input type="file" class="form-control form-control-sm" accept=".pdf,.xls,.xlsx" (change)="onArchivoSeleccionado($event)">
-                    </div>
-                    <div class="col-md-3">
-                        <button class="btn btn-success btn-sm w-100" (click)="subirDocumento()">
-                            ⬆️ Subir
-                        </button>
-                    </div>
-                </div>
-
-                <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
-                    <table class="table table-sm table-hover">
-                        <thead>
-                            <tr>
-                                <th>Tipo</th>
-                                <th>Archivo</th>
-                                <th>Subido por</th>
-                                <th>Fecha</th>
-                                <th class="text-center">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr *ngFor="let doc of listaDocumentos">
-                                <td><span class="badge bg-secondary">{{ etiquetaTipoDocumento(doc.TipoDocumento) }}</span></td>
-                                <td><small>{{ doc.NombreOriginal }}</small></td>
-                                <td><small>{{ doc.UsuarioNombre }}</small></td>
-                                <td><small>{{ doc.FechaCarga | date:'short' }}</small></td>
-                                <td class="text-center">
-                                    <button class="btn btn-sm btn-outline-primary me-1" (click)="descargarDocumento(doc)" title="Descargar">⬇️</button>
-                                    <button class="btn btn-sm btn-outline-danger" (click)="eliminarDocumento(doc)" title="Eliminar">🗑️</button>
-                                </td>
-                            </tr>
-                            <tr *ngIf="listaDocumentos.length === 0">
-                                <td colspan="5" class="text-center text-muted py-3">Este proveedor no tiene documentos cargados.</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+  <div class="modal-custom-dialog">
+    <div class="card mb-0">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+          <div>
+            <h4 class="card-title mb-0">📄 Documentos de {{ proveedorDocumentos?.RazonSocial }}</h4>
+            <h6 class="card-subtitle text-muted">Los tipos se configuran en la pestaña "Tipos de documento"</h6>
+          </div>
+          <button type="button" class="btn-close" aria-label="Cerrar" (click)="cerrarModalDocumentos()"></button>
         </div>
+
+        <div class="row g-2 align-items-end mb-3 p-2 bg-body-tertiary rounded border">
+          <div class="col-md-4">
+            <label class="form-label small fw-semibold">Tipo de documento</label>
+            <select class="form-select form-select-sm" [(ngModel)]="tipoDocumentoSeleccionado" name="tipoDocumento">
+              <option *ngFor="let tipo of tiposDocumento" [value]="tipo.Codigo">{{ tipo.Nombre }}</option>
+            </select>
+          </div>
+          <div class="col-md-5">
+            <label class="form-label small fw-semibold">Archivo (PDF, XLS, XLSX — máx. 10 MB)</label>
+            <input type="file" class="form-control form-control-sm" accept=".pdf,.xls,.xlsx" (change)="onArchivoSeleccionado($event)" />
+          </div>
+          <div class="col-md-3">
+            <button class="btn btn-success btn-sm w-100" (click)="subirDocumento()">⬆️ Subir</button>
+          </div>
+        </div>
+
+        <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+          <table class="table table-sm table-hover">
+            <thead>
+              <tr>
+                <th>Tipo</th>
+                <th>Archivo</th>
+                <th>Subido por</th>
+                <th>Fecha</th>
+                <th class="text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let doc of listaDocumentos">
+                <td><span class="badge text-bg-secondary">{{ etiquetaTipoDocumento(doc.TipoDocumento) }}</span></td>
+                <td><small>{{ doc.NombreOriginal }}</small></td>
+                <td><small>{{ doc.UsuarioNombre }}</small></td>
+                <td><small>{{ doc.FechaCarga | date: 'short' }}</small></td>
+                <td class="text-center acciones-tabla">
+                  <button class="btn btn-sm btn-outline-primary btn-icon" (click)="descargarDocumento(doc)" title="Descargar">
+                    <i class="mdi mdi-download"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger btn-icon" (click)="eliminarDocumento(doc)" title="Eliminar">
+                    <i class="mdi mdi-delete"></i>
+                  </button>
+                </td>
+              </tr>
+              <tr *ngIf="listaDocumentos.length === 0">
+                <td colspan="5" class="text-center text-muted py-3">Este proveedor no tiene documentos cargados.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
+  </div>
 </div>

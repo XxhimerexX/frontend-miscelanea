@@ -1,0 +1,223 @@
+<div class="card mb-4">
+  <div class="card-body">
+    <h4 class="card-title">🎨 Configuración de la plataforma</h4>
+    <p class="text-muted small">
+      Esta pantalla de login es compartida por todas las empresas. Aquí defines el nombre y la imagen
+      que ven todos los usuarios ANTES de iniciar sesión (después de entrar, cada empresa tiene su
+      propio nombre e ícono, editables desde "Mi empresa").
+    </p>
+
+    <div class="row align-items-end mb-3">
+      <div class="col-md-8 mb-3 mb-md-0">
+        <label class="form-label">Nombre de la plataforma</label>
+        <input type="text" class="form-control" [(ngModel)]="nombrePlataforma" name="nombrePlataforma" placeholder="Miscelánea POS" />
+      </div>
+      <div class="col-md-4">
+        <button class="btn btn-primary fw-bold w-100" (click)="guardarNombrePlataforma()" [disabled]="guardandoPlataforma">
+          {{ guardandoPlataforma ? 'Guardando...' : 'Guardar nombre' }}
+        </button>
+      </div>
+    </div>
+
+    <label class="form-label d-block">Imagen de fondo del login</label>
+    <div class="d-flex align-items-center gap-3">
+      <img *ngIf="tieneImagenLogin" [src]="imagenLoginUrl" alt="" style="width: 120px; height: 70px; object-fit: cover; border-radius: 8px;" />
+      <div class="d-flex flex-column gap-2">
+        <label class="btn btn-outline-primary btn-sm mb-0">
+          <i class="mdi mdi-upload"></i> {{ subiendoImagenLogin ? 'Subiendo...' : (tieneImagenLogin ? 'Cambiar imagen' : 'Subir imagen') }}
+          <input type="file" accept="image/png,image/jpeg,image/webp" hidden (change)="subirImagenLogin($event)" [disabled]="subiendoImagenLogin" />
+        </label>
+        <button *ngIf="tieneImagenLogin" class="btn btn-outline-danger btn-sm" (click)="eliminarImagenLogin()">
+          <i class="mdi mdi-delete"></i> Quitar imagen
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h4 class="card-title mb-0">🏢 Empresas registradas</h4>
+      <button class="btn btn-primary fw-bold" (click)="abrirModalNueva()">
+        <i class="mdi mdi-plus"></i> Nueva empresa
+      </button>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead>
+          <tr>
+            <th>Razón social</th>
+            <th>Nombre comercial</th>
+            <th>NIT</th>
+            <th class="text-center">Usuarios</th>
+            <th>Estado</th>
+            <th class="text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let e of listaEmpresas">
+            <td>{{ e.Nombre }}</td>
+            <td>{{ e.NombreComercial || '—' }}</td>
+            <td>{{ e.NIT || '—' }}</td>
+            <td class="text-center">{{ e.UsuariosCount }}</td>
+            <td>
+              <span class="badge" [ngClass]="e.Activa ? 'text-bg-success' : 'text-bg-danger'">
+                {{ e.Activa ? 'Activa' : 'Inactiva' }}
+              </span>
+            </td>
+            <td class="text-center acciones-tabla">
+              <button class="btn btn-sm btn-outline-primary btn-icon" (click)="abrirModalEditar(e)" title="Editar">
+                <i class="mdi mdi-pencil"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-secondary btn-icon" (click)="abrirModalAsignar(e)" title="Asignar usuario existente">
+                <i class="mdi mdi-account-plus"></i>
+              </button>
+              <button
+                class="btn btn-sm btn-icon"
+                [ngClass]="e.Activa ? 'btn-outline-danger' : 'btn-outline-success'"
+                (click)="alternarActiva(e)"
+                [title]="e.Activa ? 'Desactivar' : 'Activar'">
+                <i class="mdi" [ngClass]="e.Activa ? 'mdi-lock' : 'mdi-lock-open-variant'"></i>
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="!listaEmpresas.length">
+            <td colspan="6" class="text-center text-muted py-4">No hay empresas registradas todavía.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODAL: CREAR / EDITAR EMPRESA ===================== -->
+<div class="modal-backdrop-custom" *ngIf="mostrarModal" (click)="cerrarModal()"></div>
+<div class="modal-custom" *ngIf="mostrarModal" role="dialog" aria-modal="true">
+  <div class="modal-custom-dialog" style="max-width: 560px;">
+    <div class="card mb-0">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+          <h4 class="card-title mb-0">{{ modoEdicion ? '✏️ Editar empresa' : '➕ Nueva empresa' }}</h4>
+          <button type="button" class="btn-close" aria-label="Cerrar" (click)="cerrarModal()"></button>
+        </div>
+
+        <form (ngSubmit)="guardarEmpresa()">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Razón social</label>
+              <input type="text" class="form-control" [(ngModel)]="empresaForm.nombre" name="nombre" required />
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Nombre comercial</label>
+              <input type="text" class="form-control" [(ngModel)]="empresaForm.nombreComercial" name="nombreComercial" placeholder="Ej: Raíces y Brillos" />
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">NIT</label>
+              <input type="text" class="form-control" [(ngModel)]="empresaForm.nit" name="nit" />
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Teléfono</label>
+              <input type="text" class="form-control" [(ngModel)]="empresaForm.telefono" name="telefono" />
+            </div>
+            <div class="col-md-12 mb-3">
+              <label class="form-label">Dirección</label>
+              <input type="text" class="form-control" [(ngModel)]="empresaForm.direccion" name="direccion" />
+            </div>
+          </div>
+
+          <div class="form-check mb-3" *ngIf="modoEdicion">
+            <input class="form-check-input" type="checkbox" id="empresaActiva" [(ngModel)]="empresaForm.activa" name="activa" />
+            <label class="form-check-label" for="empresaActiva">Empresa activa</label>
+          </div>
+
+          <!-- Solo al crear: quién será el administrador de la nueva empresa -->
+          <div *ngIf="!modoEdicion">
+            <hr />
+            <label class="form-label fw-semibold">Administrador de la empresa</label>
+            <div class="d-flex gap-2 mb-3">
+              <button
+                type="button"
+                class="btn btn-sm flex-fill"
+                [ngClass]="empresaForm.admin.modo === 'nuevo' ? 'btn-primary' : 'btn-outline-secondary'"
+                (click)="empresaForm.admin.modo = 'nuevo'">
+                Crear usuario nuevo
+              </button>
+              <button
+                type="button"
+                class="btn btn-sm flex-fill"
+                [ngClass]="empresaForm.admin.modo === 'existente' ? 'btn-primary' : 'btn-outline-secondary'"
+                (click)="empresaForm.admin.modo = 'existente'">
+                Usar usuario existente
+              </button>
+            </div>
+
+            <div *ngIf="empresaForm.admin.modo === 'nuevo'">
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Nombre</label>
+                  <input type="text" class="form-control" [(ngModel)]="empresaForm.admin.nombre" name="adminNombre" />
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Usuario</label>
+                  <input type="text" class="form-control" [(ngModel)]="empresaForm.admin.nombreUsuario" name="adminNombreUsuario" autocapitalize="none" />
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Correo</label>
+                  <input type="email" class="form-control" [(ngModel)]="empresaForm.admin.correo" name="adminCorreo" />
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Contraseña temporal</label>
+                  <input type="password" class="form-control" [(ngModel)]="empresaForm.admin.contrasena" name="adminContrasena" />
+                </div>
+              </div>
+            </div>
+
+            <div *ngIf="empresaForm.admin.modo === 'existente'" class="mb-3">
+              <label class="form-label">Usuario o correo del administrador</label>
+              <input type="text" class="form-control" [(ngModel)]="empresaForm.admin.identificador" name="adminIdentificador" autocapitalize="none" />
+              <small class="text-muted">Ese usuario quedará como administrador de esta nueva empresa, además de las que ya tenga.</small>
+            </div>
+          </div>
+
+          <div class="d-flex gap-2 justify-content-end">
+            <button type="button" class="btn btn-secondary" (click)="cerrarModal()">Cancelar</button>
+            <button type="submit" class="btn btn-primary fw-bold" [disabled]="guardando">
+              {{ guardando ? 'Guardando...' : (modoEdicion ? 'Guardar cambios' : 'Crear empresa') }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODAL: ASIGNAR USUARIO EXISTENTE ===================== -->
+<div class="modal-backdrop-custom" *ngIf="mostrarModalAsignar" (click)="cerrarModalAsignar()"></div>
+<div class="modal-custom" *ngIf="mostrarModalAsignar" role="dialog" aria-modal="true">
+  <div class="modal-custom-dialog" style="max-width: 420px;">
+    <div class="card mb-0">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+          <h4 class="card-title mb-0">Asignar usuario</h4>
+          <button type="button" class="btn-close" aria-label="Cerrar" (click)="cerrarModalAsignar()"></button>
+        </div>
+        <p class="text-muted small">
+          Agrega un usuario existente a <b>{{ empresaParaAsignar?.NombreComercial || empresaParaAsignar?.Nombre }}</b>
+          con el rol Administrador de esa empresa.
+        </p>
+        <div class="mb-3">
+          <label class="form-label">Usuario o correo</label>
+          <input type="text" class="form-control" [(ngModel)]="identificadorAsignar" name="identificadorAsignar" autocapitalize="none" />
+        </div>
+        <div class="d-flex gap-2 justify-content-end">
+          <button type="button" class="btn btn-secondary" (click)="cerrarModalAsignar()">Cancelar</button>
+          <button type="button" class="btn btn-primary fw-bold" (click)="confirmarAsignar()" [disabled]="asignando">
+            {{ asignando ? 'Asignando...' : 'Asignar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -13,19 +13,16 @@
 
   <!-- Logo -->
   <div class="logo-container">
-    <img src="assets/images/logo-tedi.png" alt="Tedi Holding Familiar" class="logo">
+    <img src="assets/images/logo-tedi.png" alt="Logo" class="logo">
   </div>
 
   <!-- Encabezado de la empresa -->
   <div class="center">
-    <div class="company-name">TEDI HOLDING FAMILIAR S.A.S.</div>
-    <div class="subtitle">Legado • Unidad • Valores • Confianza • Crecimiento</div>
+    <div class="company-name">{{ datosFactura.EmpresaNombreComercial || datosFactura.EmpresaNombre }}</div>
     <div class="info-section" style="margin-top: 4px;">
-      NIT: 123.456.789-0<br>
-      Régimen Simple de Tributación<br>
-      Dir: Calle Principal # 45 - 28<br>
-      Tel / WhatsApp: +57 310 000 0000<br>
-      Cali - Colombia
+      <ng-container *ngIf="datosFactura.EmpresaNIT">NIT: {{ datosFactura.EmpresaNIT }}<br></ng-container>
+      <ng-container *ngIf="datosFactura.EmpresaDireccion">Dir: {{ datosFactura.EmpresaDireccion }}<br></ng-container>
+      <ng-container *ngIf="datosFactura.EmpresaTelefono">Tel / WhatsApp: {{ datosFactura.EmpresaTelefono }}</ng-container>
     </div>
   </div>
 
@@ -52,15 +49,15 @@
 
   <div class="divider"></div>
 
-  <!-- Datos del Cliente (por ahora genérico; se implementará la captura real más adelante) -->
+  <!-- Datos del Cliente -->
   <div class="info-section">
     <div class="info-row">
       <span class="bold">Cliente:</span>
-      <span>Anónimo</span>
+      <span>{{ datosFactura.Cliente || 'Consumidor final' }}</span>
     </div>
     <div class="info-row">
       <span>Documento:</span>
-      <span>N/A</span>
+      <span>{{ datosFactura.ClienteNIT || 'N/A' }}</span>
     </div>
   </div>
 
@@ -96,9 +93,9 @@
       <td>Subtotal:</td>
       <td class="right">$ {{ formatearPesos(datosFactura.Subtotal) }}</td>
     </tr>
-    <tr>
+    <tr *ngIf="datosFactura.Descuento > 0">
       <td>Descuento:</td>
-      <td class="right">$ 0</td>
+      <td class="right">- $ {{ formatearPesos(datosFactura.Descuento) }}</td>
     </tr>
     <tr>
       <td>IVA (incl.):</td>
